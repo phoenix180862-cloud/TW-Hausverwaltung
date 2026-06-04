@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Thomas Willwacher Hausverwaltung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+button{-webkit-tap-highlight-color:rgba(30,136,229,0.2);touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
+
+:root{
+  --bg-primary:#0f1923; --bg-secondary:#1a2a3c; --bg-tertiary:#223448; --bg-card:#2a3a50; --bg-hover:#324560;
+  --accent-red:#c41e1e; --accent-red-light:#e63535; --accent-blue:#4da6ff; --accent-orange:#e67e22; --accent-orange-light:#f39c12;
+  --text-primary:#e8ecf1; --text-secondary:#b0c0d4; --text-white:#f0f2f5; --text-light:#b8c4d4; --text-muted:#8a9ab4;
+  --border-color:#2e4562; --success:#27ae60;
+  --shadow-lg:0 10px 40px rgba(0,0,0,0.4); --shadow-md:0 4px 20px rgba(0,0,0,0.3);
+  --radius-sm:6px; --radius-md:12px; --radius-lg:20px;
+  --grad-blue:linear-gradient(135deg,#1E88E5,#1565C0);
+  --grad-red:linear-gradient(135deg,var(--accent-red-light),var(--accent-red));
+  --sh-blue:rgba(30,136,229,0.30);
+}
+html,body{height:100%;font-family:'Source Sans 3',-apple-system,sans-serif;background:var(--bg-primary);color:var(--text-white);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* Kachel-Textur im Hintergrund (wie Master-App) */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(45deg, rgba(255,255,255,0.015) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255,255,255,0.015) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.015) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.015) 75%);
+  background-size:40px 40px;background-position:0 0,0 20px,20px -20px,-20px 0;
+}
+.page{position:relative;z-index:1;padding:24px 16px 56px;min-height:100vh;max-width:640px;margin:0 auto}
+
+/* ── LOGO (1:1 Master-App, weißer Schriftzug, roter Akzent) ── */
+.logo-wrap{display:flex;justify-content:center;margin-bottom:14px;animation:fadeInDown .7s ease-out}
+.logo-container{display:inline-flex;flex-direction:column;align-items:flex-start;user-select:none;transform-origin:center}
+.logo-thomas-row{display:flex;align-items:baseline;margin-bottom:-18px;padding-left:1px;align-self:flex-start;position:relative;z-index:2}
+.logo-thomas-text{font-family:'Source Sans 3',serif;font-style:italic;font-weight:700;color:var(--accent-red);font-size:14.5px;letter-spacing:.3px}
+.logo-word-row{display:flex;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:700;color:var(--text-white);line-height:1}
+.logo-w,.logo-wacher,.logo-i-wrap,.logo-i-wrap .logo-i-char{font-size:62px}
+.logo-i-wrap{position:relative;display:inline-block}
+.logo-i-dot{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:var(--accent-red)}
+.logo-LL{font-size:84px;letter-spacing:1px;line-height:.75}
+.logo-subtitle-row{display:flex;justify-content:flex-end;width:100%;margin-top:1px}
+.logo-subtitle-text{font-family:'Source Sans 3',sans-serif;font-weight:600;color:var(--accent-red);font-size:14.5px;letter-spacing:2.5px}
+
+/* Kopfblock (Logo + Titel + Label) */
+.kopf{text-align:center;margin-bottom:24px}
+.kopf .titel{margin-top:12px;font-size:19px;font-weight:700;color:var(--text-white);font-family:'Oswald',sans-serif;letter-spacing:.5px}
+.kopf .label{font-size:11px;color:var(--text-muted);margin-top:4px;letter-spacing:2px;text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:500}
+.detailzeile{font-size:12px;color:var(--text-muted);margin-top:8px;font-family:'Source Sans 3',sans-serif}
+
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.reveal{animation:fadeInUp .6s ease-out both}
+.reveal.d1{animation-delay:.10s}.reveal.d2{animation-delay:.20s}.reveal.d3{animation-delay:.30s}
+
+/* Abschnitts-Überschrift */
+.sec-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.2px;font-family:'Oswald',sans-serif;margin:22px 4px 10px;display:flex;justify-content:space-between;align-items:center}
+
+/* Blaue Gradient-Kachel (Objekt / Aktion) – Master-Stil */
+.tile{width:100%;padding:14px 15px;border-radius:var(--radius-lg);border:1px solid transparent;cursor:pointer;
+  background:var(--grad-blue);color:#fff;display:flex;align-items:center;gap:12px;text-align:left;
+  box-shadow:0 6px 20px var(--sh-blue);transition:all .22s ease;margin-bottom:10px;font-family:inherit}
+.tile:hover{transform:translateY(-2px);box-shadow:0 10px 28px var(--sh-blue)}
+.tile:active{transform:translateY(1px) scale(.99)}
+.tile .ic{width:30px;height:30px;flex:none}
+.tile .ic svg{width:30px;height:30px;display:block}
+.tile .txt{flex:1;min-width:0}
+.tile .t{font-size:15px;font-weight:600;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .d{font-size:12px;opacity:.88;line-height:1.4;font-family:'Source Sans 3',sans-serif}
+.tile .arrow{font-size:18px;opacity:.7;flex:none}
+.tile .meta-r{font-size:11px;opacity:.85;font-family:'Oswald',sans-serif;text-align:right;flex:none;line-height:1.3}
+
+/* Add-Kachel (Objekt anlegen) */
+.tile.add{background:var(--bg-secondary);border:1.5px dashed var(--accent-blue);box-shadow:none;color:var(--accent-blue)}
+.tile.add:hover{background:var(--bg-tertiary);transform:translateY(-2px)}
+.tile.add .t{color:var(--accent-blue)}
+
+/* Neutrale Nav-Kachel (Verwaltung/Module) */
+.navtile{width:100%;padding:13px 15px;border-radius:var(--radius-md);border:1px solid var(--border-color);cursor:pointer;
+  background:var(--bg-secondary);color:var(--text-primary);display:flex;align-items:center;gap:12px;text-align:left;transition:all .18s ease;margin-bottom:8px;font-family:inherit}
+.navtile:hover{background:var(--bg-tertiary);border-color:var(--accent-blue)}
+.navtile .ic{width:24px;height:24px;flex:none;color:var(--accent-blue)}
+.navtile .ic svg{width:24px;height:24px;display:block}
+.navtile .t{flex:1;font-size:14px;font-weight:600;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px}
+.navtile .d{font-size:11px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;border-radius:16px;font-size:10px;font-weight:600;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px}
+.badge.soon{background:rgba(232,126,34,0.14);color:var(--accent-orange-light)}
+.badge.ok{background:rgba(39,174,96,0.14);color:var(--success)}
+.badge.art{background:rgba(77,166,255,0.14);color:var(--accent-blue)}
+.badge.aktiv{background:rgba(39,174,96,0.14);color:var(--success)}
+
+/* Karten / Panels */
+.card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
+.card h3{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-primary);margin-bottom:12px}
+.kv{display:flex;flex-direction:column;gap:9px}
+.kv .row{display:flex;justify-content:space-between;gap:14px;font-size:13.5px;border-bottom:1px solid var(--border-color);padding-bottom:9px}
+.kv .row:last-child{border-bottom:none;padding-bottom:0}
+.kv .k{color:var(--text-muted);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:11px;letter-spacing:.5px;padding-top:2px}
+.kv .v{color:var(--text-primary);text-align:right;font-family:'Source Sans 3',sans-serif}
+
+/* Akte: Panel-Kopf mit Aktion rechts */
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.panel-head h3{margin:0}
+
+/* Einheit-Subkarte */
+.einheit{background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:13px 14px;margin-bottom:12px}
+.einheit:last-child{margin-bottom:0}
+.eh-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:4px}
+.eh-top .eh-name{flex:1;min-width:0}
+.eh-top .eh-name b{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:var(--text-primary);text-transform:uppercase;letter-spacing:.4px}
+.eh-top .eh-name span{display:block;font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'Source Sans 3',sans-serif}
+
+/* Mietverhältnis-Zeile */
+.mv{border-top:1px solid var(--border-color);padding:11px 0 4px;margin-top:8px}
+.mv:first-of-type{border-top:1px dashed var(--border-color)}
+.mv-top{display:flex;align-items:center;gap:8px}
+.mv-top .mv-name{flex:1;min-width:0;font-family:'Oswald',sans-serif;font-size:13.5px;font-weight:600;color:var(--text-primary)}
+.mv-zeit{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'Source Sans 3',sans-serif}
+.mv-geld{display:flex;gap:14px;flex-wrap:wrap;margin-top:5px}
+.mv-geld span{font-size:11px;color:var(--text-light);font-family:'Source Sans 3',sans-serif}
+.mv-geld b{color:var(--text-white);font-family:'Oswald',sans-serif}
+.mv-actions{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+
+/* Mini-Buttons in der Akte */
+.mini{padding:6px 11px;border-radius:8px;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary)}
+.mini.blue{background:rgba(30,136,229,0.14);border-color:rgba(30,136,229,0.35);color:var(--accent-blue)}
+.mini.red{background:rgba(196,30,30,0.12);border-color:rgba(196,30,30,0.3);color:var(--accent-red-light)}
+.mini.grn{background:rgba(39,174,96,0.12);border-color:rgba(39,174,96,0.3);color:var(--success)}
+.add-row{width:100%;padding:10px;border-radius:var(--radius-md);border:1.5px dashed var(--accent-blue);background:rgba(30,136,229,0.06);color:var(--accent-blue);font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.add-row:hover{background:rgba(30,136,229,0.12)}
+.leer-hint{font-size:12px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif;padding:6px 0 10px}
+.dok-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-color)}
+.dok-row:last-of-type{border-bottom:none}
+.dok-row .di{flex:1;min-width:0}
+.dok-row .di b{font-family:'Source Sans 3',sans-serif;font-size:13.5px;color:var(--text-primary);font-weight:600}
+.dok-row .di span{display:block;font-size:11px;color:var(--text-muted);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.4px}
+
+/* Nebenkosten */
+.nk-result{background:linear-gradient(135deg,var(--bg-tertiary),var(--bg-secondary));border:1px solid var(--accent-blue);border-radius:var(--radius-lg);padding:16px 18px;margin:14px 0;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.nk-result .big{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;line-height:1}
+.nk-result .lbl{font-size:11px;color:var(--text-muted);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.nk-result .sub{font-size:11px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif;margin-top:4px}
+.nk-nach{color:var(--accent-red-light)} .nk-erst{color:var(--success)}
+.weg h4{font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--accent-blue);margin:16px 0 6px}
+.weg .ln{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:3px 0;font-family:'Source Sans 3',sans-serif;color:var(--text-light)}
+.weg .ln b{color:var(--text-white);font-family:'Oswald',sans-serif;font-weight:600}
+.weg .ln.tot{border-top:1px solid var(--border-color);margin-top:4px;padding-top:6px;color:var(--text-white)}
+.weg .frm{font-size:11px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif;margin:2px 0 4px}
+.disc{font-size:11px;color:var(--text-muted);font-style:italic;font-family:'Source Sans 3',sans-serif;margin-top:14px;line-height:1.5;text-align:center}
+
+/* Hinweis-Box */
+.notice{padding:14px 16px;border-radius:var(--radius-md);background:rgba(232,126,34,0.08);border:1px solid rgba(232,126,34,0.3);margin-bottom:14px}
+.notice b{display:block;color:var(--accent-orange-light);font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.notice p{font-size:13px;color:var(--text-light);line-height:1.5;font-family:'Source Sans 3',sans-serif}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:150px;padding:12px 26px;border-radius:var(--radius-md);border:none;cursor:pointer;
+  font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;transition:all .22s ease}
+.btn svg{width:17px;height:17px}
+.btn-red{background:var(--grad-red);color:#fff;box-shadow:0 4px 15px rgba(196,30,30,0.3)}
+.btn-blue{background:var(--grad-blue);color:#fff;box-shadow:0 4px 15px var(--sh-blue)}
+.btn-ghost{background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-color);box-shadow:none}
+.btn-ghost:hover{background:var(--bg-tertiary)}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{min-width:0;padding:8px 14px;font-size:12px}
+.center{text-align:center;margin-top:24px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* Empty-State */
+.empty{text-align:center;padding:30px 18px;border:1px dashed var(--border-color);border-radius:var(--radius-lg);background:var(--bg-secondary)}
+.empty .es-ic{font-size:34px;margin-bottom:8px}
+.empty h3{font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--text-muted);max-width:42ch;margin:0 auto 16px;line-height:1.5;font-family:'Source Sans 3',sans-serif}
+.empty .es-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* Footer */
+.foot{margin-top:32px;padding-top:16px;border-top:1px solid var(--border-color);text-align:center;font-size:11px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif;line-height:1.7}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.overlay.open{display:flex}
+.modal{width:100%;max-width:460px;max-height:88vh;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:20px;animation:fadeInUp .18s ease-out}
+.modal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-h h2{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-white)}
+.modal-h .x{width:34px;height:34px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-primary);font-size:16px}
+.modal p.q{font-size:14px;line-height:1.6;color:var(--text-light);font-family:'Source Sans 3',sans-serif}
+.modal-f{display:flex;gap:10px;margin-top:18px}
+.modal-f .btn{flex:1;min-width:0}
+
+/* Felder */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--text-muted);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-white);font-size:14px;font-family:'Source Sans 3',sans-serif;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(30,136,229,0.12)}
+.field textarea{resize:vertical;min-height:60px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:11px;color:var(--text-muted);margin-top:4px;font-family:'Source Sans 3',sans-serif}
+</style>
+</head>
+<body>
+<div class="page" id="view"></div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h"><h2 id="mTitle">Titel</h2><button class="x" onclick="closeModal()" aria-label="Schließen">&#10005;</button></div>
+    <div id="mBody"></div>
+    <div class="modal-f" id="mFoot"></div>
+  </div>
+</div>
+<input type="file" id="importFile" accept="application/json" style="display:none">
+
+<script>
+/* ============================================================
+   THOMAS WILLWACHER HAUSVERWALTUNG · Ausbaustufe 1
+   Design 1:1 nach TW Business Suite (Master-App): dunkel,
+   Oswald + Source Sans 3, ModulWahl-Startseite mit Objektauswahl.
+   Eine HTML-Datei, Vanilla JS, GitHub-Pages-fähig.
+   ============================================================ */
+
+/* ---------- Helfer ---------- */
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate=d=>d?new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}):'\u2014';
+const eur=n=>(Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+
+/* ============================================================
+   PDF-BRIEFKOPF  ·  Single Source of Truth fuer ALLE PDFs
+   1:1 aus der TW Business Suite (tw-pdf-briefkopf.js), nur auf
+   "Hausverwaltung" umgestellt. Einheitliches Bild = Erkennungswert.
+   ============================================================ */
+const PDF_LOGO="data:image/jpeg;base64,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";          // Wortmarke + roter Untertitel "Hausverwaltung"
+const PDF_LOGO_ASPECT=3.3989;               // Breite/Hoehe (wie Original-Briefkopf)
+const TW_PDF={
+  PAGE_W:210, PAGE_H:297, MARGIN_L:22, MARGIN_R:18, MARGIN_T:18, MARGIN_B:25,
+  LOGO_BREITE:85,
+  FARBE_ROT:[196,30,30], FARBE_TEXT:[17,17,17], FARBE_TEXT_MID:[51,51,51],
+  FARBE_TEXT_DUNKEL:[34,34,34], FARBE_GRAU_LABEL:[136,136,136],
+  FARBE_GRAU_FOOTER:[102,102,102], FARBE_GRAU_KLEIN:[170,170,170],
+  FIRMA_NAME:'Thomas Willwacher Hausverwaltung',
+  ADRESSE_1:'Flurweg 14a', ADRESSE_2:'56472 Nisterau',
+  TEL:'Tel. 02661-63101', MOBIL:'Mobil 0170-2024161',
+  ABSENDER_LINE:'Thomas Willwacher Hausverwaltung \u00B7 Flurweg 14a \u00B7 56472 Nisterau',
+  STEUERNUMMER:'Steuernummer: 18/191/51218',
+  KONTAKTZEILE:'Tel. 02661-63101 \u00B7 Mobil 0170-2024161 \u00B7 info@thomas-willwacher.de'
+};
+function tw_drawLogoImage(doc,x,y,breite){
+  const h=breite/PDF_LOGO_ASPECT;
+  try{ doc.addImage(PDF_LOGO,'JPEG',x,y,breite,h,undefined,'FAST'); }
+  catch(e){ try{ doc.addImage(PDF_LOGO,'JPEG',x,y,breite,h); }catch(e2){} }
+  return h;
+}
+function tw_drawBriefkopfHeader(doc){
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MT=P.MARGIN_T, rx=P.PAGE_W-MR;
+  let y=MT;
+  tw_drawLogoImage(doc,ML,y,P.LOGO_BREITE);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.setTextColor(...P.FARBE_TEXT_MID);
+  doc.text(P.ADRESSE_1,rx,y+8,{align:'right'});
+  doc.text(P.ADRESSE_2,rx,y+12,{align:'right'});
+  doc.text(P.TEL,rx,y+16,{align:'right'});
+  doc.text(P.MOBIL,rx,y+20,{align:'right'});
+  y+=30;
+  doc.setDrawColor(...P.FARBE_ROT); doc.setLineWidth(0.8); doc.line(ML,y,rx,y); y+=4;
+  doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(...P.FARBE_GRAU_KLEIN);
+  doc.text(P.ABSENDER_LINE,ML,y); y+=6;
+  return y;
+}
+function tw_drawBriefkopfFooter(doc,pageNum){
+  const P=TW_PDF, PW=P.PAGE_W, PH=P.PAGE_H, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=PW-MR;
+  const pn=pageNum==null?1:pageNum;
+  doc.setDrawColor(...P.FARBE_ROT); doc.setLineWidth(0.5); doc.line(ML,PH-MB+2,rx,PH-MB+2);
+  doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...P.FARBE_ROT);
+  doc.text(P.FIRMA_NAME,ML,PH-MB+6);
+  doc.setFont('helvetica','normal'); doc.setTextColor(...P.FARBE_GRAU_FOOTER);
+  doc.text(P.STEUERNUMMER,rx,PH-MB+6,{align:'right'});
+  doc.text(P.KONTAKTZEILE,ML,PH-MB+10);
+  doc.text('Seite '+pn,rx,PH-MB+10,{align:'right'});
+}
+function tw_drawEmpfaengerBlock(doc,y,data){
+  data=data||{}; const P=TW_PDF, ML=P.MARGIN_L, rx=P.PAGE_W-P.MARGIN_R, top=y;
+  if(data.name){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...P.FARBE_TEXT); doc.text(String(data.name),ML,y); y+=5; }
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...P.FARBE_TEXT_MID);
+  if(data.zusatz){ doc.text(String(data.zusatz),ML,y); y+=5; }
+  if(data.strasse){ doc.text(String(data.strasse),ML,y); y+=5; }
+  if(data.plzOrt){ doc.text(String(data.plzOrt),ML,y); y+=5; }
+  if(data.datum){
+    let t; try{ const d=(data.datum instanceof Date)?data.datum:new Date(data.datum); t=isNaN(d.getTime())?String(data.datum):d.toLocaleDateString('de-DE'); }catch(e){ t=String(data.datum); }
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...P.FARBE_GRAU_LABEL); doc.text('Datum:',rx-30,top);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...P.FARBE_TEXT_DUNKEL); doc.text(t,rx,top,{align:'right'});
+  }
+  y=Math.max(y,top+20)+20; return y;
+}
+function pdfReady(){ return !!(window.jspdf&&window.jspdf.jsPDF); }
+
+/* ---------- Persistenz (window.storage zuerst, localStorage als Fallback) ---------- */
+const KEY='hv:data:v1';
+const Store={
+  async get(){
+    try{ if(window.storage?.get){const r=await window.storage.get(KEY); return r?.value?JSON.parse(r.value):null;} }catch(e){}
+    try{ const v=localStorage.getItem(KEY); return v?JSON.parse(v):null; }catch(e){ return null; }
+  },
+  async set(d){
+    const s=JSON.stringify(d);
+    try{ if(window.storage?.set){ await window.storage.set(KEY,s); return; } }catch(e){}
+    try{ localStorage.setItem(KEY,s); }catch(e){}
+  }
+};
+
+/* ---------- State ---------- */
+let state={ objekte:[], einstellungen:{version:'1.0'} };
+let view='home', selId=null;
+const ART={ einzel:'Einzelimmobilie', mfh:'Mehrfamilienhaus', weg:'WEG-Eigentum', eigen:'Eigennutzung' };
+async function save(){ await Store.set(state); }
+async function load(){ const d=await Store.get(); if(d&&d.objekte) state=d; }
+
+/* ---------- Icons (weiße Stroke-SVGs im Master-Stil) ---------- */
+const I={
+  haus:'<rect x="5" y="11" width="22" height="17" rx="1.5" stroke="white" stroke-width="2" fill="none"/><path d="M3 12L16 4l13 8" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><rect x="13" y="19" width="6" height="9" stroke="white" stroke-width="1.5" fill="none"/>',
+  nk:'<rect x="6" y="3" width="20" height="26" rx="2" stroke="white" stroke-width="2" fill="none"/><line x1="10" y1="11" x2="22" y2="11" stroke="white" stroke-width="1.5"/><line x1="10" y1="16" x2="22" y2="16" stroke="white" stroke-width="1.5"/><line x1="10" y1="21" x2="18" y2="21" stroke="white" stroke-width="1.5"/>',
+  weg:'<path d="M4 27V11l12-7 12 7v16" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><line x1="2" y1="27" x2="30" y2="27" stroke="white" stroke-width="2"/><rect x="12" y="18" width="8" height="9" stroke="white" stroke-width="1.5" fill="none"/><circle cx="16" cy="11" r="2" fill="white"/>',
+  recht:'<line x1="16" y1="4" x2="16" y2="28" stroke="white" stroke-width="2"/><line x1="7" y1="9" x2="25" y2="9" stroke="white" stroke-width="2"/><path d="M7 9l-3 8a4 4 0 008 0L9 9M25 9l-3 8a4 4 0 008 0l-3-8" stroke="white" stroke-width="1.6" fill="none"/>',
+  stamm:'<circle cx="16" cy="16" r="4" stroke="white" stroke-width="2" fill="none"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3" stroke="white" stroke-width="1.6"/>',
+  plus:'<path d="M16 6v20M6 16h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
+};
+const svgWrap=p=>'<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">'+p+'</svg>';
+
+/* ---------- Logo (1:1 Master-App) ---------- */
+function logoHTML(scale){
+  return '<div class="logo-wrap"><div class="logo-container" style="transform:scale('+scale+')">'
+    +'<div class="logo-thomas-row"><span class="logo-thomas-text">Thomas</span></div>'
+    +'<div class="logo-word-row"><span class="logo-w">w</span>'
+    +'<span class="logo-i-wrap"><span class="logo-i-char">&#305;</span><span class="logo-i-dot"></span></span>'
+    +'<span class="logo-LL">LL</span><span class="logo-wacher">wacher</span></div>'
+    +'<div class="logo-subtitle-row"><span class="logo-subtitle-text">Hausverwaltung</span></div>'
+    +'</div></div>';
+}
+function kopf(titel,label,scale){
+  return '<div class="kopf">'+logoHTML(scale||0.6)
+    +(titel?'<div class="titel">'+esc(titel)+'</div>':'')
+    +(label?'<div class="label">'+esc(label)+'</div>':'')+'</div>';
+}
+
+/* ---------- KPIs ---------- */
+function kpis(){
+  let einheiten=0,belegt=0,eigen=0;
+  state.objekte.forEach(o=>{(o.einheiten||[]).forEach(e=>{
+    einheiten++; const aktiv=(e.mietverhaeltnisse||[]).some(m=>!m.auszug);
+    if(o.art==='eigen')eigen++; else if(aktiv)belegt++;
+  });});
+  return {objekte:state.objekte.length,einheiten,belegt,frei:Math.max(0,einheiten-belegt-eigen),eigen};
+}
+
+/* ---------- Routing ---------- */
+function go(v,id){ view=v; selId=id||null; render(); window.scrollTo(0,0); }
+function render(){
+  const el=document.getElementById('view');
+  if(view==='home') el.innerHTML=renderHome();
+  else if(view==='detail') el.innerHTML=renderDetail();
+  else if(view==='stamm') el.innerHTML=renderStamm();
+  else if(view==='nk') el.innerHTML=renderNk();
+  else if(view==='weg') el.innerHTML=renderWeg();
+  else el.innerHTML=renderSoon(view);
+}
+
+/* ---------- Startseite: Logo + Hausverwaltung + Objektauswahl ---------- */
+function renderHome(){
+  const n=state.objekte.length, k=kpis();
+  const detail = n
+    ? n+' Objekt'+(n>1?'e':'')+' \u00b7 '+k.einheiten+' Einheit'+(k.einheiten!==1?'en':'')+' \u00b7 '+k.belegt+' vermietet'
+    : 'Bereit f\u00fcr Ihr erstes Objekt';
+
+  let head='<div class="kopf">'+logoHTML(0.74)
+    +'<div class="label">Objektverwaltung</div>'
+    +'<div class="detailzeile">'+detail+'</div></div>';
+
+  // Objektauswahl
+  let objsel;
+  if(n===0){
+    objsel='<div class="empty reveal d1">'
+      +'<div class="es-ic">\uD83C\uDFE0</div>'
+      +'<h3>Hier beginnt Ihre Verwaltung</h3>'
+      +'<p>Legen Sie Ihr erstes Objekt an \u2013 Haus, Wohnung oder Eigentum. Danach \u00f6ffnen Sie es per Klick und arbeiten in der Akte weiter.</p>'
+      +'<div class="es-actions">'
+      +'<button class="btn btn-blue btn-sm" onclick="openObjektModal()">'+iconPlusBlue()+' Objekt anlegen</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="loadBeispiel()">Beispielobjekt</button>'
+      +'</div></div>';
+  } else {
+    objsel='<div class="sec-label reveal"><span>Objekt w\u00e4hlen</span><span>'+n+'</span></div>'
+      +'<div class="reveal d1">'
+      +'<button class="tile add" onclick="openObjektModal()"><span class="ic">'+svgWrapC(I.plus)+'</span><span class="txt"><span class="t">Neues Objekt anlegen</span></span></button>'
+      +state.objekte.map(objTile).join('')
+      +'</div>';
+  }
+
+  // Verwaltung (weitere Module)
+  const verw='<div class="sec-label reveal d2"><span>Verwaltung</span></div><div class="reveal d2">'
+    +navTile(I.nk,'Nebenkostenabrechnung','Abrechnung nach Ihrer Vorlage','nk',true)
+    +navTile(I.weg,'Eigentum & R\u00fccklagen','WEG, Erhaltungsr\u00fccklage','weg',true)
+    +navTile(I.recht,'Rechtsgrundlagen','BGB, BetrKV, HeizkostenV, WEG','recht',false)
+    +navTile(I.stamm,'Stammdaten & Sicherung','Verwalterdaten, Daten sichern','stamm',true)
+    +'</div>';
+
+  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v1 (Stufe 1)<br>'
+    +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
+
+  return head+objsel+verw+foot;
+}
+function iconPlusBlue(){ return '<svg viewBox="0 0 32 32" fill="none" style="width:16px;height:16px"><path d="M16 6v20M6 16h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'; }
+function svgWrapC(p){ return '<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">'+p.replace(/white/g,'currentColor')+'</svg>'; }
+
+/* ---------- Objekt-Kachel (blau, Master-Stil) ---------- */
+function objTile(o){
+  const eh=(o.einheiten||[]).length;
+  const belegt=(o.einheiten||[]).filter(e=>(e.mietverhaeltnisse||[]).some(m=>!m.auszug)).length;
+  const adr=esc([o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(' \u00b7 ')||ART[o.art]);
+  return '<button class="tile" onclick="go(\'detail\',\''+o.id+'\')">'
+    +'<span class="ic">'+svgWrap(I.haus)+'</span>'
+    +'<span class="txt"><span class="t">'+esc(o.bezeichnung)+'</span><span class="d">'+adr+'</span></span>'
+    +'<span class="meta-r">'+eh+' Einh.<br>'+belegt+' verm.</span>'
+    +'<span class="arrow">\u2192</span></button>';
+}
+function navTile(icon,t,d,target,ready){
+  const badge = ready?'<span class="badge ok">aktiv</span>':'<span class="badge soon">bald</span>';
+  return '<button class="navtile" onclick="go(\''+target+'\')">'
+    +'<span class="ic">'+svgWrapC(icon)+'</span>'
+    +'<span style="flex:1;min-width:0"><span class="t">'+t+'</span><span class="d">'+d+'</span></span>'
+    +badge+'</button>';
+}
+
+/* ---------- Objekt-Akte: Stammdaten + Einheiten/Mieterarchiv + Dokumente ---------- */
+function renderDetail(){
+  const o=state.objekte.find(x=>x.id===selId);
+  if(!o) return renderHome();
+  const adr=esc([o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ')||'\u2014');
+  return kopf(o.bezeichnung, ART[o.art], 0.55)
+    +'<div class="card reveal">'
+    +'<h3>Stammdaten</h3>'
+    +'<div class="kv">'
+    +row('Adresse',adr)
+    +row('Objektart',ART[o.art])
+    +row('Baujahr',o.baujahr||'\u2014')
+    +row('Gesamtwohnfl\u00e4che',o.gesamtwohnflaeche?o.gesamtwohnflaeche+' m\u00b2':'\u2014')
+    +row('Heizung',esc(o.heizung||'\u2014'))
+    +'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:16px">'
+    +'<button class="btn btn-blue btn-sm" style="flex:1" onclick="openObjektModal(\''+o.id+'\')">Bearbeiten</button>'
+    +'<button class="btn btn-red btn-sm" style="flex:1" onclick="deleteObjekt(\''+o.id+'\')">L\u00f6schen</button>'
+    +'</div></div>'
+    +'<button class="btn btn-ghost reveal" style="width:100%;margin-bottom:14px" onclick="objektPdf(\''+o.id+'\')">Objekt-Datenblatt als PDF</button>'
+    +einheitenCard(o)
+    +(o.art==='weg'?wegCard(o):'')
+    +dokumenteCard(o)
+    +'<div class="center reveal d1"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+}
+function row(k,v){ return '<div class="row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; }
+
+/* ---------- Karte: Einheiten & Mieterarchiv ---------- */
+function einheitenCard(o){
+  const eh=o.einheiten||[];
+  const kannMehr=(o.art==='mfh'||o.art==='weg');
+  let inner='';
+  if(eh.length===0){
+    inner='<div class="leer-hint">Noch keine Einheit angelegt.</div>'
+      +'<button class="add-row" onclick="openEinheitModal(\''+o.id+'\')">+ Einheit hinzuf\u00fcgen</button>';
+  } else {
+    inner=eh.map(e=>einheitBlock(o,e)).join('');
+    if(kannMehr) inner+='<button class="add-row" onclick="openEinheitModal(\''+o.id+'\')">+ Weitere Einheit</button>';
+  }
+  const addBtn=(eh.length&&kannMehr)?'<button class="mini blue" onclick="openEinheitModal(\''+o.id+'\')">+ Einheit</button>':'';
+  return '<div class="card reveal d1"><div class="panel-head"><h3>Einheiten & Mieter</h3>'+addBtn+'</div>'+inner+'</div>';
+}
+function einheitBlock(o,e){
+  const mv=[...(e.mietverhaeltnisse||[])].sort((a,b)=>String(b.einzug||'').localeCompare(String(a.einzug||''))||((b.geaendert||0)-(a.geaendert||0)));
+  const meta=[ (e.wohnflaeche?e.wohnflaeche+' m\u00b2':null), (e.zimmer?e.zimmer+' Zi.':null) ].filter(Boolean).join(' \u00b7 ')||'\u2014';
+  let mvHtml = mv.length? mv.map(m=>mvBlock(o,e,m)).join('') : '<div class="leer-hint">Noch kein Mietverh\u00e4ltnis erfasst.</div>';
+  return '<div class="einheit">'
+    +'<div class="eh-top"><div class="eh-name"><b>'+esc(e.bezeichnung)+'</b><span>'+meta+'</span></div>'
+    +'<button class="mini" onclick="openEinheitModal(\''+o.id+'\',\''+e.id+'\')">Bearb.</button>'
+    +'<button class="mini red" onclick="deleteEinheit(\''+o.id+'\',\''+e.id+'\')">Entf.</button></div>'
+    +mvHtml
+    +'<button class="add-row" onclick="openMvModal(\''+o.id+'\',\''+e.id+'\')">+ Mietverh\u00e4ltnis</button>'
+    +'</div>';
+}
+function mvBlock(o,e,m){
+  const aktiv=!m.auszug;
+  const badge=aktiv?'<span class="badge aktiv">aktiv</span>'
+                   :'<span class="badge" style="background:rgba(138,154,180,0.16);color:var(--text-muted)">Archiv</span>';
+  const zeit='Einzug '+fmtDate(m.einzug)+' \u2013 '+(m.auszug?fmtDate(m.auszug):'laufend');
+  let actions='';
+  if(aktiv) actions+='<button class="mini grn" onclick="endMv(\''+o.id+'\',\''+e.id+'\',\''+m.id+'\')">Auszug eintragen</button>';
+  actions+='<button class="mini blue" onclick="openMvModal(\''+o.id+'\',\''+e.id+'\',\''+m.id+'\')">Bearb.</button>';
+  actions+='<button class="mini red" onclick="deleteMv(\''+o.id+'\',\''+e.id+'\',\''+m.id+'\')">Entf.</button>';
+  return '<div class="mv">'
+    +'<div class="mv-top"><span class="mv-name">'+esc(m.mieter||'\u2014')+'</span>'+badge+'</div>'
+    +'<div class="mv-zeit">'+zeit+'</div>'
+    +'<div class="mv-geld"><span>Kaltmiete <b>'+eur(m.kaltmiete)+'</b></span><span>NK-Voraus. <b>'+eur(m.nkVoraus)+'</b></span><span>Kaution <b>'+eur(m.kaution)+'</b></span></div>'
+    +(m.notiz?'<div class="mv-zeit" style="margin-top:4px">'+esc(m.notiz)+'</div>':'')
+    +'<div class="mv-actions">'+actions+'</div>'
+    +'</div>';
+}
+
+/* ---------- Karte: Dokumente ---------- */
+function dokumenteCard(o){
+  const dk=o.dokumente||[];
+  let inner = dk.length
+    ? dk.map(d=>'<div class="dok-row"><div class="di"><b>'+esc(d.name)+'</b><span>'+esc(d.art||'Dokument')+' \u00b7 '+fmtDate(d.datum)+'</span></div>'
+        +'<button class="mini red" onclick="deleteDok(\''+o.id+'\',\''+d.id+'\')">Entf.</button></div>').join('')
+    : '<div class="leer-hint">Noch keine Dokumente vermerkt.</div>';
+  inner+='<button class="add-row" onclick="openDokModal(\''+o.id+'\')">+ Dokument vermerken</button>';
+  return '<div class="card reveal d2"><div class="panel-head"><h3>Dokumente</h3></div>'+inner
+    +'<p class="hint" style="margin-top:8px">Verzeichnis-Eintrag (Name, Art, Datum). Echter Datei-Upload folgt in einer sp\u00e4teren Stufe.</p></div>';
+}
+
+/* ---------- Karte: Erhaltungsrücklage (WEG) — Kurzinfo + Sprung ins Modul ---------- */
+function wegCard(o){
+  const stand=ruecklageStand(o);
+  return '<div class="card reveal d1"><div class="panel-head"><h3>Erhaltungsr\u00fccklage (\u00a7 19 WEG)</h3></div>'
+    +'<div class="kv">'+row('Aktueller Stand',eur(stand))+row('Bewegungen',((o.ruecklage&&o.ruecklage.bewegungen)||[]).length)+'</div>'
+    +'<button class="btn btn-blue btn-sm" style="width:100%;margin-top:14px" onclick="go(\'weg\',\''+o.id+'\')">R\u00fccklagen & WEG verwalten</button></div>';
+}
+
+/* ---------- Stammdaten & Sicherung ---------- */
+function renderStamm(){
+  return kopf('Stammdaten','Hausverwaltung',0.55)
+    +'<div class="card reveal"><h3>Verwalter / Vermieter</h3><div class="kv">'
+    +row('Name','Thomas Willwacher Hausverwaltung')
+    +row('Anschrift','Flurweg 14a, 56472 Nisterau')
+    +row('Telefon','02661-63101')
+    +row('Mobil','0170-2024161')
+    +row('E-Mail','info@thomas-willwacher.de')
+    +row('Steuernummer','18/191/51218')
+    +'</div><p class="hint" style="margin-top:12px">Diese Daten bilden den Briefkopf aller PDF-Ausgaben.</p>'
+    +'<button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="briefkopfDemoPdf()">Briefkopf-Vorschau (PDF)</button></div>'
+    +'<div class="card reveal d1"><h3>Datensicherung</h3>'
+    +'<p class="hint" style="margin-bottom:14px">Der Browserspeicher kann gel\u00f6scht werden. Sichern Sie Ihre Daten regelm\u00e4\u00dfig als Datei und spielen Sie sie bei Bedarf zur\u00fcck.</p>'
+    +'<div style="display:flex;flex-direction:column;gap:10px">'
+    +'<button class="btn btn-blue" onclick="exportData()">Daten sichern (JSON)</button>'
+    +'<button class="btn btn-ghost" onclick="document.getElementById(\'importFile\').click()">Sicherung einspielen</button>'
+    +'<button class="btn btn-ghost" style="color:var(--accent-red-light);border-color:rgba(196,30,30,0.4)" onclick="wipe()">Alle Daten l\u00f6schen</button>'
+    +'</div></div>'
+    +'<div class="center reveal d1"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+}
+
+/* ---------- „Bald"-Module ---------- */
+function renderSoon(v){
+  const map={
+    nk:{t:'Nebenkostenabrechnung',l:'Abrechnung',d:'Die gef\u00fchrte Abrechnungsmaske nach Ihrer Excel-Vorlage (HeizkostenV-konform) mit PDF im Briefkopf entsteht in Stufe 3.'},
+    weg:{t:'Eigentum & R\u00fccklagen',l:'WEG',d:'WEG-Verwaltung mit Erhaltungsr\u00fccklage (\u00a7 19 WEG), Hausgeld und Beschluss-Sammlung folgt in Stufe 4.'},
+    recht:{t:'Rechtsgrundlagen',l:'Wissen',d:'Die gefilterte Gesetzes-Bibliothek (BGB, BetrKV, HeizkostenV, WEG) wird in Stufe 5 ausgebaut.'}
+  };
+  const m=map[v]||{t:'Modul',l:'',d:'In Arbeit.'};
+  return kopf(m.t,m.l,0.55)
+    +'<div class="notice reveal"><b>Dieses Modul ist in Vorbereitung</b><p>'+m.d+'</p></div>'
+    +'<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+}
+
+/* ============================================================
+   NEBENKOSTENABRECHNUNG  ·  Stufe 3
+   Rechenlogik 1:1 aus der Excel-Vorlage (HeizkostenV/BetrKV).
+   Geführte Maske, Live-Saldo, transparenter Rechenweg, PDF.
+   ============================================================ */
+let nkObjId=null, nkJahr=null, nkEinheitId=null, nkWork=null, nkLoadedKey=null, nkWegOpen=false;
+
+function nkEnsure(o){
+  const key=o.id+'|'+nkJahr;
+  if(nkLoadedKey===key && nkWork) return;
+  const saved=(o.nk&&o.nk[nkJahr])?JSON.parse(JSON.stringify(o.nk[nkJahr])):null;
+  if(saved){ nkWork=saved; nkWork.mieter=nkWork.mieter||{}; nkWork.gesamt=nkWork.gesamt||{}; }
+  else{
+    const gflaeche=o.gesamtwohnflaeche||(o.einheiten||[]).reduce((s,e)=>s+(Number(e.wohnflaeche)||0),0);
+    nkWork={ datum:new Date().toISOString().slice(0,10), splitVerbrauch:70,
+      gesamt:{we:'',ww:'',wasser:'',oel:'',heizanlage:'',zusatzWW:'',zusatzHeiz:'',wasserkosten:'',hausGarten:'',tv:'',strom:'',feuerv:'',anzahlEinheiten:((o.einheiten||[]).length||1),gesamtflaeche:gflaeche||''},
+      mieter:{} };
+  }
+  (o.einheiten||[]).forEach(e=>{
+    if(!nkWork.mieter[e.id]){
+      const akt=(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+      nkWork.mieter[e.id]={ name:akt?akt.mieter:(e.bezeichnung||''), flaeche:(e.wohnflaeche||''), we:'',ww:'',wasser:'',abschlaege:(akt&&akt.nkVoraus?akt.nkVoraus*12:''),muell:'',grundsteuer:'' };
+    }
+  });
+  nkLoadedKey=key;
+}
+function nkSet(group,key,val){
+  if(!nkWork) return;
+  if(group==='split') nkWork.splitVerbrauch=val;
+  else if(group==='datum') nkWork.datum=val;
+  else if(group==='gesamt') nkWork.gesamt[key]=val;
+  else if(group==='mieter'){ if(!nkWork.mieter[nkEinheitId]) nkWork.mieter[nkEinheitId]={}; nkWork.mieter[nkEinheitId][key]=val; }
+  nkRecalc();
+}
+function nkNum(v){ const x=parseFloat(String(v==null?'':v).replace(/\./g,'').replace(',','.')); return isNaN(x)?(function(){const y=parseFloat(String(v).replace(',','.'));return isNaN(y)?0:y;})():x; }
+function nkCompute(w,eid){
+  const n=v=>{ const x=parseFloat(String(v==null?'':v).replace(',','.')); return isNaN(x)?0:x; };
+  const G=w.gesamt||{}, m=(w.mieter&&w.mieter[eid])||{};
+  const verbr=Math.min(70,Math.max(50,n(w.splitVerbrauch||70)))/100, grund=1-verbr;
+  const WE_gesamt=n(G.we), WW_gesamt=n(G.ww), Wasser_gesamt=n(G.wasser), Oel=n(G.oel);
+  const SummeHeiz=n(G.heizanlage), ZWW=n(G.zusatzWW), ZHeiz=n(G.zusatzHeiz);
+  const Wasserkosten=n(G.wasserkosten), HausGarten=n(G.hausGarten), TV=n(G.tv), Strom=n(G.strom), Feuerv=n(G.feuerv);
+  const AnzEinh=n(G.anzahlEinheiten)||1, GesFlaeche=n(G.gesamtflaeche)||1;
+  const LiterOelWW=(2.5*WW_gesamt*(60-10))/10;
+  const AnteilWW=Oel>0?(100/Oel*LiterOelWW):0;
+  const WWenergie=SummeHeiz*(AnteilWW/100);
+  const Warmwasserkosten=WWenergie+ZWW;
+  const Heizkosten=SummeHeiz-WWenergie+ZHeiz;
+  const WWg=Warmwasserkosten*grund, WWv=Warmwasserkosten*verbr, Hg=Heizkosten*grund, Hv=Heizkosten*verbr;
+  const EW_Hg=GesFlaeche>0?Hg/GesFlaeche:0, EW_Hv=WE_gesamt>0?Hv/WE_gesamt:0, EW_WWg=GesFlaeche>0?WWg/GesFlaeche:0, EW_WWv=WW_gesamt>0?WWv/WW_gesamt:0;
+  const mFl=n(m.flaeche), mWE=n(m.we), mWW=n(m.ww), mWas=n(m.wasser), mAbschl=n(m.abschlaege), mMuell=n(m.muell), mGrund=n(m.grundsteuer);
+  const m_Hg=mFl*EW_Hg, m_Hv=mWE*EW_Hv, m_WWg=mFl*EW_WWg, m_WWv=mWW*EW_WWv;
+  const KostenHeizWW=m_Hg+m_Hv+m_WWg+m_WWv;
+  const EW_Feuerv=GesFlaeche>0?Feuerv/GesFlaeche:0, EW_HausGart=AnzEinh>0?HausGarten/AnzEinh:0, EW_Wasser=Wasser_gesamt>0?Wasserkosten/Wasser_gesamt:0, EW_Strom=AnzEinh>0?Strom/AnzEinh:0, EW_TV=AnzEinh>0?TV/AnzEinh:0;
+  const m_Feuerv=mFl*EW_Feuerv, m_HausGart=EW_HausGart, m_Wasser=mWas*EW_Wasser, m_Strom=EW_Strom, m_TV=EW_TV;
+  const KostenHausneben=m_Feuerv+m_HausGart+m_Wasser+m_Strom+m_TV+mMuell+mGrund;
+  const Gesamt=KostenHeizWW+KostenHausneben, Saldo=Gesamt-mAbschl;
+  let datum; try{ datum=w.datum?new Date(w.datum):new Date(); if(isNaN(datum.getTime()))datum=new Date(); }catch(e){ datum=new Date(); }
+  const tage=Math.max(0,Math.round((datum-new Date(datum.getFullYear(),0,1))/86400000));
+  const Nachzahlung=Math.max(Saldo,0), Tagesanteil=Nachzahlung/365*tage, SummeNeu=Tagesanteil+Nachzahlung, NeuAbschlag=(SummeNeu/12)+(mAbschl/12);
+  return {verbr,grund,LiterOelWW,AnteilWW,WWenergie,Warmwasserkosten,Heizkosten,WWg,WWv,Hg,Hv,EW_Hg,EW_Hv,EW_WWg,EW_WWv,
+    m_Hg,m_Hv,m_WWg,m_WWv,KostenHeizWW,m_Feuerv,m_HausGart,m_Wasser,m_Strom,m_TV,mMuell,mGrund,KostenHausneben,
+    Gesamt,mAbschl,Saldo,tage,Nachzahlung,Tagesanteil,SummeNeu,NeuAbschlag,
+    inputs:{WW_gesamt,Oel,SummeHeiz,ZWW,ZHeiz,mFl,mWE,mWW,mWas}};
+}
+function nkResultHtml(c){
+  const nach=c.Saldo>=0;
+  return '<div><div class="lbl">Gesamt-Nebenkosten</div><div class="big">'+eur(c.Gesamt)+'</div><div class="sub">abz\u00fcgl. Abschl\u00e4ge '+eur(c.mAbschl)+'</div></div>'
+    +'<div style="text-align:right"><div class="lbl">'+(nach?'Nachzahlung':'Erstattung')+'</div>'
+    +'<div class="big '+(nach?'nk-nach':'nk-erst')+'">'+eur(Math.abs(c.Saldo))+'</div>'
+    +'<div class="sub">Neuer Abschlag: <b style="color:var(--text-white)">'+eur(c.NeuAbschlag)+'</b>/Monat</div></div>';
+}
+function nkLn(k,v,tot){ return '<div class="ln'+(tot?' tot':'')+'"><span>'+k+'</span><b>'+v+'</b></div>'; }
+function nkWegHtml(c){
+  const i=c.inputs, e=eur, q=v=>(Number(v)||0).toLocaleString('de-DE',{maximumFractionDigits:4});
+  return '<div class="card weg reveal"><h3>Rechenweg (nachvollziehbar)</h3>'
+   +'<h4>Warmwasser-Energieanteil</h4>'
+   +'<div class="frm">(2,5 \u00d7 '+q(i.WW_gesamt)+' m\u00b3 \u00d7 (60\u201310)) \u00f7 10 = '+q(c.LiterOelWW)+' L \u00d6l</div>'
+   +nkLn('Anteil Warmwasser','100 \u00f7 '+q(i.Oel)+' \u00d7 '+q(c.LiterOelWW)+' = '+q(c.AnteilWW)+' %')
+   +'<h4>Aufteilung Heizanlage</h4>'
+   +nkLn('Summe Heizanlage',e(i.SummeHeiz))+nkLn('davon Warmwasser-Energie',e(c.WWenergie))
+   +nkLn('Warmwasserkosten (+ Zusatz '+e(i.ZWW)+')',e(c.Warmwasserkosten))
+   +nkLn('Heizkosten (\u2212 WW + Zusatz '+e(i.ZHeiz)+')',e(c.Heizkosten))
+   +'<h4>Grund-/Verbrauchssplit ('+Math.round(c.grund*100)+'\u202f% / '+Math.round(c.verbr*100)+'\u202f%)</h4>'
+   +nkLn('Warmwasser Grund / Verbrauch',e(c.WWg)+'  /  '+e(c.WWv))
+   +nkLn('Heizung Grund / Verbrauch',e(c.Hg)+'  /  '+e(c.Hv))
+   +'<h4>Einheitswerte</h4>'
+   +nkLn('Heizung Grund je m\u00b2',e(c.EW_Hg))+nkLn('Heizung Verbrauch je WE',e(c.EW_Hv))
+   +nkLn('Warmwasser Grund je m\u00b2',e(c.EW_WWg))+nkLn('Warmwasser Verbrauch je m\u00b3',e(c.EW_WWv))
+   +'<h4>Heiz- & Warmwasserkosten des Mieters</h4>'
+   +nkLn('Heizung Grund ('+q(i.mFl)+' m\u00b2)',e(c.m_Hg))+nkLn('Heizung Verbrauch ('+q(i.mWE)+' WE)',e(c.m_Hv))
+   +nkLn('Warmwasser Grund ('+q(i.mFl)+' m\u00b2)',e(c.m_WWg))+nkLn('Warmwasser Verbrauch ('+q(i.mWW)+' m\u00b3)',e(c.m_WWv))
+   +nkLn('Summe Heizung & Warmwasser',e(c.KostenHeizWW),true)
+   +'<h4>Hausnebenkosten des Mieters</h4>'
+   +nkLn('Feuerversicherung (Fl\u00e4che)',e(c.m_Feuerv))+nkLn('Haus & Garten (je Einheit)',e(c.m_HausGart))
+   +nkLn('Wasser/Abwasser ('+q(i.mWas)+' m\u00b3)',e(c.m_Wasser))+nkLn('Allgemeinstrom (je Einheit)',e(c.m_Strom))
+   +nkLn('Sat-TV (je Einheit)',e(c.m_TV))+nkLn('M\u00fcll (direkt)',e(c.mMuell))+nkLn('Grundsteuer (direkt)',e(c.mGrund))
+   +nkLn('Summe Hausnebenkosten',e(c.KostenHausneben),true)
+   +'<h4>Ergebnis</h4>'
+   +nkLn('Gesamt-Nebenkosten',e(c.Gesamt))+nkLn('abz\u00fcglich Abschl\u00e4ge',e(c.mAbschl))
+   +nkLn((c.Saldo>=0?'Nachzahlung':'Erstattung'),e(Math.abs(c.Saldo)),true)
+   +'<h4>Neuer Abschlag ('+c.tage+' Tage seit 01.01.)</h4>'
+   +nkLn('Tagesanteil',e(c.Tagesanteil))+nkLn('Summe f\u00fcr neue Abschl\u00e4ge',e(c.SummeNeu))
+   +nkLn('Neuer monatl. Abschlag',e(c.NeuAbschlag),true)+'</div>';
+}
+function nkRecalc(){
+  if(!nkWork) return;
+  const c=nkCompute(nkWork,nkEinheitId);
+  const r=document.getElementById('nkResult'); if(r) r.innerHTML=nkResultHtml(c);
+  const w=document.getElementById('nkWeg'); if(w) w.innerHTML=nkWegOpen?nkWegHtml(c):'';
+}
+function nkToggleWeg(){ nkWegOpen=!nkWegOpen; render(); }
+function nkPickObj(v){ nkObjId=v; nkLoadedKey=null; nkEinheitId=null; render(); }
+function nkPickJahr(v){ const j=(v||'').trim(); if(j) nkJahr=j; nkLoadedKey=null; render(); }
+function nkPickEinheit(v){ nkEinheitId=v; render(); }
+function nkSave(){
+  const o=_o(nkObjId); if(!o) return; o.nk=o.nk||{}; o.nk[nkJahr]=JSON.parse(JSON.stringify(nkWork)); o.geaendert=Date.now(); save();
+  const b=document.getElementById('nkSaveBtn'); if(b){ b.textContent='Gespeichert \u2713'; setTimeout(()=>{ if(document.getElementById('nkSaveBtn'))document.getElementById('nkSaveBtn').textContent='Speichern'; },1500); }
+}
+function nf(label,group,key,val,unit){
+  const v=(val!=null&&val!=='')?esc(String(val)):'';
+  return '<div class="field"><label>'+label+(unit?' ('+unit+')':'')+'</label>'
+    +'<input type="text" inputmode="decimal" value="'+v+'" oninput="nkSet(\''+group+'\','+(key==null?'null':"'"+key+"'")+',this.value)"></div>';
+}
+function renderNk(){
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  if(state.objekte.length===0)
+    return kopf('Nebenkostenabrechnung','Abrechnung',0.55)
+      +'<div class="empty reveal"><div class="es-ic">\uD83E\uDDFE</div><h3>Noch kein Objekt</h3><p>Legen Sie zuerst ein Objekt mit Einheiten an \u2013 die Abrechnung greift dann auf Fl\u00e4chen und Mieter zu.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'home\')">Zur Objektverwaltung</button></div></div>'+back;
+  if(!nkObjId||!_o(nkObjId)) nkObjId=state.objekte[0].id;
+  if(!nkJahr) nkJahr=String(new Date().getFullYear()-1);
+  const o=_o(nkObjId); nkEnsure(o);
+  const eh=o.einheiten||[];
+  if(!nkEinheitId||!eh.find(e=>e.id===nkEinheitId)) nkEinheitId=eh[0]?eh[0].id:null;
+  const G=nkWork.gesamt, M=(nkWork.mieter[nkEinheitId])||{};
+
+  const objField = state.objekte.length>1
+    ? '<div class="field"><label>Objekt</label><select onchange="nkPickObj(this.value)">'+state.objekte.map(x=>'<option value="'+x.id+'"'+(x.id===nkObjId?' selected':'')+'>'+esc(x.bezeichnung)+'</option>').join('')+'</select></div>'
+    : '<div class="field"><label>Objekt</label><input value="'+esc(o.bezeichnung)+'" disabled></div>';
+  const sel='<div class="card reveal"><h3>Abrechnung</h3>'+objField
+    +'<div class="row2"><div class="field"><label>Abrechnungsjahr</label><input type="text" inputmode="numeric" value="'+esc(nkJahr)+'" onchange="nkPickJahr(this.value)"></div>'
+    +'<div class="field"><label>Erstellungsdatum</label><input type="date" value="'+esc(nkWork.datum)+'" oninput="nkSet(\'datum\',null,this.value)"></div></div></div>';
+
+  if(!nkEinheitId)
+    return kopf('Nebenkostenabrechnung','Abrechnung',0.55)+sel
+      +'<div class="notice reveal"><b>Keine Einheit vorhanden</b><p>F\u00fcgen Sie dem Objekt in der Akte zun\u00e4chst eine Einheit hinzu \u2013 dann kann pro Mieter abgerechnet werden.</p></div>'+back;
+
+  const gv='<div class="card reveal d1"><h3>Gesamtwerte des Objekts \u00b7 '+esc(nkJahr)+'</h3>'
+    +'<div class="row2">'+nf('W\u00e4rmeeinheiten gesamt','gesamt','we',G.we,'WE')+nf('Warmwasser gesamt','gesamt','ww',G.ww,'m\u00b3')+'</div>'
+    +'<div class="row2">'+nf('Wasserverbrauch gesamt','gesamt','wasser',G.wasser,'m\u00b3')+nf('Heiz\u00f6lverbrauch','gesamt','oel',G.oel,'L')+'</div>'
+    +'<div class="row2">'+nf('Summe Heizanlage','gesamt','heizanlage',G.heizanlage,'\u20ac')+nf('Zusatzkosten Warmwasser','gesamt','zusatzWW',G.zusatzWW,'\u20ac')+'</div>'
+    +'<div class="row2">'+nf('Zusatzkosten Heizung','gesamt','zusatzHeiz',G.zusatzHeiz,'\u20ac')+nf('Wasserkosten gesamt','gesamt','wasserkosten',G.wasserkosten,'\u20ac')+'</div>'
+    +'<div class="row2">'+nf('Haus & Garten','gesamt','hausGarten',G.hausGarten,'\u20ac')+nf('Allgemeinstrom','gesamt','strom',G.strom,'\u20ac')+'</div>'
+    +'<div class="row2">'+nf('Sat-TV','gesamt','tv',G.tv,'\u20ac')+nf('Feuerversicherung','gesamt','feuerv',G.feuerv,'\u20ac')+'</div>'
+    +'<div class="row2">'+nf('Anzahl Einheiten','gesamt','anzahlEinheiten',G.anzahlEinheiten,'')+nf('Gesamtwohnfl\u00e4che','gesamt','gesamtflaeche',G.gesamtflaeche,'m\u00b2')+'</div></div>';
+  const vt='<div class="card reveal d1"><h3>Verteilung Heizung / Warmwasser</h3>'
+    +'<div class="row2">'+nf('Verbrauchsanteil','split',null,nkWork.splitVerbrauch,'%')+'<div class="field"></div></div>'
+    +'<p class="hint">Grundkosten = Rest auf 100\u202f%. HeizkostenV erlaubt 50\u201370\u202f% Verbrauchsanteil; Ihre Vorlage nutzt 70\u202f%.</p></div>';
+  const ehOpts=eh.map(e=>'<option value="'+e.id+'"'+(e.id===nkEinheitId?' selected':'')+'>'+esc(e.bezeichnung)+'</option>').join('');
+  const mc='<div class="card reveal d2"><h3>Mieter / Einheit</h3>'
+    +'<div class="field"><label>Einheit</label><select onchange="nkPickEinheit(this.value)">'+ehOpts+'</select></div>'
+    +'<div class="field"><label>Mieter (Empf\u00e4nger der Abrechnung)</label><input type="text" value="'+esc(M.name||'')+'" oninput="nkSet(\'mieter\',\'name\',this.value)"></div>'
+    +'<div class="row2">'+nf('Wohnfl\u00e4che','mieter','flaeche',M.flaeche,'m\u00b2')+nf('W\u00e4rmeeinheiten Mieter','mieter','we',M.we,'WE')+'</div>'
+    +'<div class="row2">'+nf('Warmwasser Mieter','mieter','ww',M.ww,'m\u00b3')+nf('Wasser Mieter','mieter','wasser',M.wasser,'m\u00b3')+'</div>'
+    +'<div class="row2">'+nf('Gezahlte Abschl\u00e4ge','mieter','abschlaege',M.abschlaege,'\u20ac/Jahr')+nf('M\u00fcll-Anteil','mieter','muell',M.muell,'\u20ac')+'</div>'
+    +'<div class="row2">'+nf('Grundsteuer-Anteil','mieter','grundsteuer',M.grundsteuer,'\u20ac')+'<div class="field"></div></div></div>';
+
+  const c=nkCompute(nkWork,nkEinheitId);
+  const result='<div class="nk-result reveal d2" id="nkResult">'+nkResultHtml(c)+'</div>';
+  const actions='<div class="center reveal d2">'
+    +'<button class="btn btn-ghost btn-sm" onclick="nkToggleWeg()">'+(nkWegOpen?'Rechenweg ausblenden':'Rechenweg anzeigen')+'</button>'
+    +'<button class="btn btn-ghost btn-sm" id="nkSaveBtn" onclick="nkSave()">Speichern</button>'
+    +'<button class="btn btn-blue btn-sm" onclick="nkPdf()">Als PDF</button></div>';
+  const weg='<div id="nkWeg">'+(nkWegOpen?nkWegHtml(c):'')+'</div>';
+  const disc='<div class="disc reveal">Informations- und Abrechnungswerkzeug \u2013 keine Steuer- oder Rechtsberatung. Bitte alle Werte und Belege vor dem Versand pr\u00fcfen.</div>';
+  return kopf('Nebenkostenabrechnung','Abrechnung',0.55)+sel+gv+vt+mc+result+actions+weg+disc+back;
+}
+function nkPdf(){
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte gleich erneut.'); return; }
+  const o=_o(nkObjId), e=_e(o,nkEinheitId), c=nkCompute(nkWork,nkEinheitId), M=nkWork.mieter[nkEinheitId]||{};
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR;
+  const foot=()=>tw_drawBriefkopfFooter(doc,doc.internal.getNumberOfPages());
+  const E=v=>eur(v).replace(/\u00a0/g,' ');
+  const i=c.inputs, q=v=>(Number(v)||0).toLocaleString('de-DE',{maximumFractionDigits:4});
+  let y=tw_drawBriefkopfHeader(doc);
+  const adr=[o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  y=tw_drawEmpfaengerBlock(doc,y,{name:M.name||'Mieter',zusatz:(e?e.bezeichnung:'')+(adr?' \u00b7 '+adr:''),datum:nkWork.datum});
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(17,17,17); doc.text('Nebenkostenabrechnung '+nkJahr,ML,y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(51,51,51); doc.text('Objekt: '+o.bezeichnung+(adr?', '+adr:''),ML,y); y+=8;
+  const section=(titel,rows)=>{
+    doc.autoTable({ startY:y, margin:{left:ML,right:MR,bottom:MB+8},
+      head:[[{content:titel,colSpan:2,styles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',halign:'left'}}]],
+      body:rows, theme:'plain', showHead:'everyPage',
+      styles:{font:'helvetica',fontSize:9,textColor:[34,34,34],cellPadding:{top:1.6,bottom:1.6,left:2,right:2}},
+      columnStyles:{0:{cellWidth:'auto',textColor:[60,60,60]},1:{cellWidth:42,halign:'right'}}, didDrawPage:foot });
+    y=doc.lastAutoTable.finalY+5;
+  };
+  section('Warmwasser-Energieanteil & Aufteilung Heizanlage',[
+    ['Liter Oel Warmwasser: (2,5 x '+q(i.WW_gesamt)+' m3 x 50) / 10', q(c.LiterOelWW)+' L'],
+    ['Anteil Warmwasser: 100 / '+q(i.Oel)+' x '+q(c.LiterOelWW), q(c.AnteilWW)+' %'],
+    ['Summe Heizanlage', E(i.SummeHeiz)],
+    ['Warmwasserkosten (inkl. Zusatz '+E(i.ZWW)+')', E(c.Warmwasserkosten)],
+    ['Heizkosten (inkl. Zusatz '+E(i.ZHeiz)+')', E(c.Heizkosten)]]);
+  section('Grund-/Verbrauchssplit ('+Math.round(c.grund*100)+' % / '+Math.round(c.verbr*100)+' %)',[
+    ['Warmwasser Grund / Verbrauch', E(c.WWg)+'  /  '+E(c.WWv)],
+    ['Heizung Grund / Verbrauch', E(c.Hg)+'  /  '+E(c.Hv)],
+    ['Einheitswert Heizung Grund je m2', E(c.EW_Hg)],
+    ['Einheitswert Heizung Verbrauch je WE', E(c.EW_Hv)],
+    ['Einheitswert Warmwasser Grund je m2', E(c.EW_WWg)],
+    ['Einheitswert Warmwasser Verbrauch je m3', E(c.EW_WWv)]]);
+  section('Ihre Kosten Heizung & Warmwasser',[
+    ['Heizung Grundkosten ('+q(i.mFl)+' m2)', E(c.m_Hg)],
+    ['Heizung Verbrauch ('+q(i.mWE)+' WE)', E(c.m_Hv)],
+    ['Warmwasser Grundkosten ('+q(i.mFl)+' m2)', E(c.m_WWg)],
+    ['Warmwasser Verbrauch ('+q(i.mWW)+' m3)', E(c.m_WWv)],
+    [{content:'Summe Heizung & Warmwasser',styles:{fontStyle:'bold'}},{content:E(c.KostenHeizWW),styles:{fontStyle:'bold'}}]]);
+  section('Ihre Hausnebenkosten',[
+    ['Feuerversicherung (Flaeche)', E(c.m_Feuerv)],
+    ['Haus & Garten (je Einheit)', E(c.m_HausGart)],
+    ['Wasser/Abwasser ('+q(i.mWas)+' m3)', E(c.m_Wasser)],
+    ['Allgemeinstrom (je Einheit)', E(c.m_Strom)],
+    ['Sat-TV (je Einheit)', E(c.m_TV)],
+    ['Muell (direkt)', E(c.mMuell)],
+    ['Grundsteuer (direkt)', E(c.mGrund)],
+    [{content:'Summe Hausnebenkosten',styles:{fontStyle:'bold'}},{content:E(c.KostenHausneben),styles:{fontStyle:'bold'}}]]);
+  if(y>P.PAGE_H-MB-44){ doc.addPage(); y=P.MARGIN_T; }
+  doc.autoTable({ startY:y, margin:{left:ML,right:MR,bottom:MB+8}, theme:'grid',
+    body:[['Gesamt-Nebenkosten',E(c.Gesamt)],['Abzueglich gezahlte Abschlaege',E(c.mAbschl)],
+      [{content:(c.Saldo>=0?'Nachzahlung':'Erstattung'),styles:{fontStyle:'bold',fontSize:11}},{content:E(Math.abs(c.Saldo)),styles:{fontStyle:'bold',fontSize:11,halign:'right'}}]],
+    styles:{font:'helvetica',fontSize:9.5,textColor:[34,34,34],cellPadding:{top:2.5,bottom:2.5,left:3,right:3},lineColor:[224,224,224],lineWidth:0.2},
+    columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:42,halign:'right'}}, didDrawPage:foot });
+  y=doc.lastAutoTable.finalY+5;
+  section('Zukuenftige Abschlaege ('+c.tage+' Tage seit 01.01.)',[
+    ['Tagesanteil der Nachzahlung', E(c.Tagesanteil)],
+    ['Summe fuer neue Abschlaege', E(c.SummeNeu)],
+    [{content:'Neuer monatlicher Abschlag',styles:{fontStyle:'bold'}},{content:E(c.NeuAbschlag),styles:{fontStyle:'bold'}}]]);
+  if(y>P.PAGE_H-MB-18){ doc.addPage(); y=P.MARGIN_T; }
+  doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(136,136,136);
+  doc.text(doc.splitTextToSize('Informations- und Abrechnungswerkzeug \u2013 keine Steuer- oder Rechtsberatung. Angaben ohne Gewaehr; massgeblich sind die geprueften Belege.',rx-ML),ML,y+2);
+  doc.save('Nebenkostenabrechnung_'+nkJahr+'_'+String(M.name||(e?e.bezeichnung:'Mieter')).replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/ +/g,'_')+'.pdf');
+}
+
+/* ============================================================
+   EIGENTUM & RÜCKLAGEN (WEG)  ·  Stufe 4
+   Erhaltungsrücklage (§ 19 WEG) mit Bewegungsliste, MEA/Hausgeld,
+   Beschluss-Sammlung, Sonderumlagen, Kontoauszug-PDF im Briefkopf.
+   ============================================================ */
+let wegObjId=null;
+function ruecklageStand(o){ const b=(o.ruecklage&&o.ruecklage.bewegungen)||[]; return b.reduce((s,x)=>s+(x.art==='entnahme'?-1:1)*(Number(x.betrag)||0),0); }
+function wegPick(v){ wegObjId=v; selId=null; render(); }
+function wegSet(objId,key,val){ const o=_o(objId); if(!o)return; if(key==='mea')o.mea=val; else if(key==='hausgeld')o.hausgeld=val; o.geaendert=Date.now(); save(); }
+
+function renderWeg(){
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const wegList=state.objekte.filter(o=>o.art==='weg');
+  if(wegList.length===0)
+    return kopf('Eigentum & R\u00fccklagen','WEG',0.55)
+      +'<div class="empty reveal"><div class="es-ic">\uD83C\uDFDB\uFE0F</div><h3>Kein WEG-Objekt</h3><p>Legen Sie ein Objekt der Art \u201eWEG-Eigentum\u201c an \u2013 dann verwalten Sie hier Erhaltungsr\u00fccklage, Hausgeld, Beschl\u00fcsse und Sonderumlagen.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="openObjektModal()">WEG-Objekt anlegen</button></div></div>'+back;
+  if(selId && _o(selId) && _o(selId).art==='weg') wegObjId=selId;
+  if(!wegObjId||!wegList.find(o=>o.id===wegObjId)) wegObjId=wegList[0].id;
+  const o=_o(wegObjId);
+  o.ruecklage=o.ruecklage||{stand:0,bewegungen:[]}; o.beschluesse=o.beschluesse||[]; o.sonderumlagen=o.sonderumlagen||[];
+  const stand=ruecklageStand(o);
+  const bew=[...(o.ruecklage.bewegungen||[])].sort((a,b)=>String(b.datum||'').localeCompare(String(a.datum||'')));
+
+  const objField = wegList.length>1
+    ? '<div class="card reveal"><div class="field" style="margin:0"><label>WEG-Objekt</label><select onchange="wegPick(this.value)">'+wegList.map(x=>'<option value="'+x.id+'"'+(x.id===wegObjId?' selected':'')+'>'+esc(x.bezeichnung)+'</option>').join('')+'</select></div></div>'
+    : '';
+
+  let bewHtml = bew.length ? bew.map(x=>{
+      const ein=x.art!=='entnahme';
+      return '<div class="dok-row"><div class="di"><b>'+esc(x.zweck||(ein?'Zuf\u00fchrung':'Entnahme'))+'</b><span>'+fmtDate(x.datum)+' \u00b7 '+(ein?'Zuf\u00fchrung':'Entnahme')+'</span></div>'
+        +'<span style="font-family:Oswald,sans-serif;font-weight:700;color:'+(ein?'var(--success)':'var(--accent-red-light)')+'">'+(ein?'+ ':'\u2212 ')+eur(x.betrag)+'</span>'
+        +'<button class="mini" onclick="openBewegungModal(\''+o.id+'\',\''+(ein?'zufuehrung':'entnahme')+'\',\''+x.id+'\')">Bearb.</button>'
+        +'<button class="mini red" onclick="deleteBewegung(\''+o.id+'\',\''+x.id+'\')">Entf.</button></div>';
+    }).join('') : '<div class="leer-hint">Noch keine Bewegungen.</div>';
+
+  const rkCard='<div class="card reveal d1"><div class="panel-head"><h3>Erhaltungsr\u00fccklage (\u00a7 19 WEG)</h3></div>'
+    +'<div class="nk-result" style="border-color:var(--success)"><div><div class="lbl">Aktueller Stand</div><div class="big nk-erst">'+eur(stand)+'</div></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="mini grn" onclick="openBewegungModal(\''+o.id+'\',\'zufuehrung\')">+ Zuf\u00fchrung</button><button class="mini red" onclick="openBewegungModal(\''+o.id+'\',\'entnahme\')">\u2212 Entnahme</button></div></div>'
+    +bewHtml
+    +'<button class="add-row" onclick="ruecklagePdf(\''+o.id+'\')">Kontoauszug als PDF</button></div>';
+
+  const eck='<div class="card reveal d1"><h3>Eckdaten</h3>'
+    +'<div class="row2"><div class="field"><label>Miteigentumsanteil (MEA)</label><input type="text" value="'+(o.mea!=null?esc(String(o.mea)):'')+'" placeholder="z. B. 250/1000" oninput="wegSet(\''+o.id+'\',\'mea\',this.value)"></div>'
+    +'<div class="field"><label>Hausgeld (\u20ac/Monat)</label><input type="text" inputmode="decimal" value="'+(o.hausgeld!=null?esc(String(o.hausgeld)):'')+'" placeholder="0,00" oninput="wegSet(\''+o.id+'\',\'hausgeld\',this.value)"></div></div>'
+    +'<p class="hint">MEA dient als Verteilerschl\u00fcssel; Hausgeld ist die monatliche Vorauszahlung an die Gemeinschaft.</p></div>';
+
+  let beHtml = o.beschluesse.length ? [...o.beschluesse].sort((a,b)=>String(b.datum||'').localeCompare(String(a.datum||''))).map(x=>'<div class="dok-row"><div class="di"><b>'+esc(x.titel)+'</b><span>'+fmtDate(x.datum)+(x.text?' \u00b7 '+esc(x.text):'')+'</span></div><button class="mini red" onclick="deleteBeschluss(\''+o.id+'\',\''+x.id+'\')">Entf.</button></div>').join('') : '<div class="leer-hint">Noch keine Beschl\u00fcsse erfasst.</div>';
+  const beCard='<div class="card reveal d2"><div class="panel-head"><h3>Beschl\u00fcsse & Protokolle</h3></div>'+beHtml+'<button class="add-row" onclick="openBeschlussModal(\''+o.id+'\')">+ Beschluss erfassen</button></div>';
+
+  let suHtml = o.sonderumlagen.length ? [...o.sonderumlagen].sort((a,b)=>String(b.datum||'').localeCompare(String(a.datum||''))).map(x=>'<div class="dok-row"><div class="di"><b>'+esc(x.zweck)+'</b><span>'+fmtDate(x.datum)+'</span></div><span style="font-family:Oswald,sans-serif;font-weight:700;color:var(--text-white)">'+eur(x.betrag)+'</span><button class="mini red" onclick="deleteSonderumlage(\''+o.id+'\',\''+x.id+'\')">Entf.</button></div>').join('') : '<div class="leer-hint">Keine Sonderumlagen.</div>';
+  const suCard='<div class="card reveal d2"><div class="panel-head"><h3>Sonderumlagen</h3></div>'+suHtml+'<button class="add-row" onclick="openSonderumlageModal(\''+o.id+'\')">+ Sonderumlage</button></div>';
+
+  return kopf('Eigentum & R\u00fccklagen','WEG',0.55)+objField+rkCard+eck+beCard+suCard+back;
+}
+
+/* Bewegung (Zuführung/Entnahme) */
+function openBewegungModal(objId,art,bId){
+  const o=_o(objId); o.ruecklage=o.ruecklage||{stand:0,bewegungen:[]};
+  const b=bId?(o.ruecklage.bewegungen||[]).find(x=>x.id===bId):null;
+  const ein=art!=='entnahme', today=new Date().toISOString().slice(0,10);
+  document.getElementById('mTitle').textContent=ein?'Zuf\u00fchrung zur R\u00fccklage':'Entnahme aus R\u00fccklage';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Datum</label><input id="b_datum" type="date" value="'+(b?b.datum:today)+'"></div>'
+    +'<div class="field"><label>Betrag (\u20ac)</label><input id="b_betrag" type="text" inputmode="decimal" value="'+(b?esc(String(b.betrag)):'')+'" placeholder="250,00"></div>'
+    +'<div class="field"><label>Zweck</label><input id="b_zweck" value="'+(b?esc(b.zweck):'')+'" placeholder="'+(ein?'monatliche Zuf\u00fchrung':'Reparatur Dach')+'"></div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-blue" onclick="saveBewegung(\''+objId+'\',\''+(ein?'zufuehrung':'entnahme')+'\',\''+(bId||'')+'\')">Speichern</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('b_betrag'); if(f)f.focus();},60);
+}
+function saveBewegung(objId,art,bId){
+  const o=_o(objId), g=x=>document.getElementById(x);
+  const betrag=parseFloat(String(g('b_betrag').value).replace(',','.'))||0;
+  if(betrag<=0){ g('b_betrag').focus(); g('b_betrag').style.borderColor='var(--accent-red)'; return; }
+  o.ruecklage=o.ruecklage||{stand:0,bewegungen:[]};
+  const data={datum:g('b_datum').value||null,art:(art==='entnahme'?'entnahme':'zufuehrung'),betrag,zweck:g('b_zweck').value.trim()};
+  if(bId){ Object.assign(o.ruecklage.bewegungen.find(x=>x.id===bId),data); }
+  else{ o.ruecklage.bewegungen.push({id:uid(),...data}); }
+  o.ruecklage.stand=ruecklageStand(o); o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function deleteBewegung(objId,bId){ const o=_o(objId); o.ruecklage.bewegungen=o.ruecklage.bewegungen.filter(x=>x.id!==bId); o.ruecklage.stand=ruecklageStand(o); o.geaendert=Date.now(); save(); render(); }
+
+/* Beschluss */
+function openBeschlussModal(objId){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('mTitle').textContent='Beschluss erfassen';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Titel *</label><input id="be_titel" placeholder="z. B. Dachsanierung beschlossen"></div>'
+    +'<div class="field"><label>Datum</label><input id="be_datum" type="date" value="'+today+'"></div>'
+    +'<div class="field"><label>Ergebnis / Notiz</label><textarea id="be_text" placeholder="Kurzfassung des Beschlusses"></textarea></div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-blue" onclick="saveBeschluss(\''+objId+'\')">Speichern</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('be_titel'); if(f)f.focus();},60);
+}
+function saveBeschluss(objId){
+  const o=_o(objId), g=x=>document.getElementById(x);
+  const titel=g('be_titel').value.trim(); if(!titel){ g('be_titel').focus(); g('be_titel').style.borderColor='var(--accent-red)'; return; }
+  o.beschluesse=o.beschluesse||[]; o.beschluesse.unshift({id:uid(),titel,datum:g('be_datum').value||null,text:g('be_text').value.trim()});
+  o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function deleteBeschluss(objId,bId){ const o=_o(objId); o.beschluesse=(o.beschluesse||[]).filter(x=>x.id!==bId); o.geaendert=Date.now(); save(); render(); }
+
+/* Sonderumlage */
+function openSonderumlageModal(objId){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('mTitle').textContent='Sonderumlage';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Zweck *</label><input id="su_zweck" placeholder="z. B. Fassadensanierung"></div>'
+    +'<div class="row2"><div class="field"><label>Datum</label><input id="su_datum" type="date" value="'+today+'"></div>'
+    +'<div class="field"><label>Betrag (\u20ac)</label><input id="su_betrag" type="text" inputmode="decimal" placeholder="0,00"></div></div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-blue" onclick="saveSonderumlage(\''+objId+'\')">Speichern</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('su_zweck'); if(f)f.focus();},60);
+}
+function saveSonderumlage(objId){
+  const o=_o(objId), g=x=>document.getElementById(x);
+  const zweck=g('su_zweck').value.trim(); if(!zweck){ g('su_zweck').focus(); g('su_zweck').style.borderColor='var(--accent-red)'; return; }
+  o.sonderumlagen=o.sonderumlagen||[]; o.sonderumlagen.unshift({id:uid(),zweck,datum:g('su_datum').value||null,betrag:parseFloat(String(g('su_betrag').value).replace(',','.'))||0});
+  o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function deleteSonderumlage(objId,sId){ const o=_o(objId); o.sonderumlagen=(o.sonderumlagen||[]).filter(x=>x.id!==sId); o.geaendert=Date.now(); save(); render(); }
+
+/* PDF: Rücklagen-Kontoauszug */
+function ruecklagePdf(objId){
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte gleich erneut.'); return; }
+  const o=_o(objId); const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR;
+  const foot=()=>tw_drawBriefkopfFooter(doc,doc.internal.getNumberOfPages());
+  const E=v=>eur(v).replace(/\u00a0/g,' ');
+  let y=tw_drawBriefkopfHeader(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(17,17,17); doc.text('Erhaltungsr\u00fccklage \u2013 Kontoauszug',ML,y+2);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(136,136,136); doc.text('Stand: '+new Date().toLocaleDateString('de-DE'),rx,y+2,{align:'right'}); y+=11;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(17,17,17); doc.text(o.bezeichnung,ML,y); y+=5;
+  const adr=[o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(51,51,51); if(adr){ doc.text(adr,ML,y); y+=5; }
+  const eck=[]; if(o.mea!=null&&o.mea!=='') eck.push('MEA: '+o.mea); if(o.hausgeld!=null&&o.hausgeld!=='') eck.push('Hausgeld: '+E(o.hausgeld)+'/Monat');
+  if(eck.length){ doc.setFontSize(9.5); doc.setTextColor(80,80,80); doc.text(eck.join('   \u00b7   '),ML,y); y+=5; }
+  y+=3;
+  const bew=[...((o.ruecklage&&o.ruecklage.bewegungen)||[])].sort((a,b)=>String(a.datum||'').localeCompare(String(b.datum||'')));
+  let run=0;
+  let rows=bew.map(x=>{ const ein=x.art!=='entnahme', b=Number(x.betrag)||0; run+=ein?b:-b; return [fmtDate(x.datum), ein?'Zuf\u00fchrung':'Entnahme', x.zweck||'', (ein?'+ ':'\u2212 ')+E(b), E(run)]; });
+  if(rows.length===0) rows=[[{content:'Keine Bewegungen erfasst.',colSpan:5,styles:{textColor:[136,136,136],fontStyle:'italic'}}]];
+  doc.autoTable({ startY:y, margin:{left:ML,right:MR,bottom:MB+8},
+    head:[['Datum','Art','Zweck','Betrag','Saldo']], body:rows, theme:'grid', showHead:'everyPage',
+    styles:{font:'helvetica',fontSize:8.5,textColor:[34,34,34],cellPadding:{top:2,bottom:2,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15,overflow:'linebreak'},
+    headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:8.5},
+    columnStyles:{0:{cellWidth:22},1:{cellWidth:24},2:{cellWidth:'auto'},3:{cellWidth:30,halign:'right'},4:{cellWidth:30,halign:'right'}},
+    foot:[[{content:'Aktueller Stand',colSpan:4,styles:{halign:'right',fontStyle:'bold'}},{content:E(ruecklageStand(o)),styles:{halign:'right',fontStyle:'bold'}}]],
+    footStyles:{fillColor:[240,240,240],textColor:[17,17,17],fontSize:9}, didDrawPage:foot });
+  y=doc.lastAutoTable.finalY+8;
+  if((o.beschluesse||[]).length){
+    if(y>P.PAGE_H-MB-30){ doc.addPage(); y=P.MARGIN_T; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); doc.text('Beschl\u00fcsse & Protokolle',ML,y);
+    doc.autoTable({ startY:y+2.5, margin:{left:ML,right:MR,bottom:MB+8},
+      head:[['Datum','Beschluss','Ergebnis / Notiz']], body:o.beschluesse.map(x=>[fmtDate(x.datum),x.titel,x.text||'']),
+      theme:'grid', showHead:'everyPage',
+      styles:{font:'helvetica',fontSize:8.5,textColor:[34,34,34],cellPadding:{top:2,bottom:2,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15,overflow:'linebreak'},
+      headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:8.5},
+      columnStyles:{0:{cellWidth:22},1:{cellWidth:60},2:{cellWidth:'auto'}}, didDrawPage:foot });
+    y=doc.lastAutoTable.finalY+8;
+  }
+  if((o.sonderumlagen||[]).length){
+    if(y>P.PAGE_H-MB-30){ doc.addPage(); y=P.MARGIN_T; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); doc.text('Sonderumlagen',ML,y);
+    doc.autoTable({ startY:y+2.5, margin:{left:ML,right:MR,bottom:MB+8},
+      head:[['Datum','Zweck','Betrag']], body:o.sonderumlagen.map(x=>[fmtDate(x.datum),x.zweck,E(x.betrag)]),
+      theme:'grid', showHead:'everyPage',
+      styles:{font:'helvetica',fontSize:8.5,textColor:[34,34,34],cellPadding:{top:2,bottom:2,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15},
+      headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:8.5},
+      columnStyles:{0:{cellWidth:22},1:{cellWidth:'auto'},2:{cellWidth:32,halign:'right'}}, didDrawPage:foot });
+  }
+  doc.save('Ruecklage_'+(o.bezeichnung||'WEG').replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/ +/g,'_')+'.pdf');
+}
+
+/* ---------- PDF: Objekt-Datenblatt (nutzt gemeinsamen Briefkopf) ---------- */
+function objektPdf(objId){
+  const o=_o(objId);
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte einen Moment und erneut klicken.'); return; }
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR;
+  const foot=()=>tw_drawBriefkopfFooter(doc,doc.internal.getNumberOfPages());
+  let y=tw_drawBriefkopfHeader(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(17,17,17);
+  doc.text('Objekt-Datenblatt',ML,y+2);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(136,136,136);
+  doc.text('Stand: '+new Date().toLocaleDateString('de-DE'),rx,y+2,{align:'right'});
+  y+=11;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(17,17,17); doc.text(o.bezeichnung,ML,y); y+=5;
+  const adr=[o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  if(adr){ doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(51,51,51); doc.text(adr,ML,y); y+=5; }
+  y+=2;
+  doc.autoTable({ startY:y, margin:{left:ML,right:MR,bottom:MB+8}, theme:'plain',
+    styles:{font:'helvetica',fontSize:9.5,textColor:[34,34,34],cellPadding:{top:1.2,bottom:1.2,left:0,right:2}},
+    columnStyles:{0:{cellWidth:48,textColor:[136,136,136]},1:{cellWidth:'auto'}},
+    body:[['Objektart',ART[o.art]],['Baujahr',o.baujahr?String(o.baujahr):'\u2014'],
+      ['Gesamtwohnfl\u00e4che',o.gesamtwohnflaeche?o.gesamtwohnflaeche+' m2':'\u2014'],
+      ['Heizung',o.heizung||'\u2014'],['Einheiten',String((o.einheiten||[]).length)]],
+    didDrawPage:foot });
+  y=doc.lastAutoTable.finalY+9;
+  const eh=o.einheiten||[];
+  eh.forEach(e=>{
+    if(y>P.PAGE_H-MB-30){ doc.addPage(); y=P.MARGIN_T; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30);
+    const meta=[(e.wohnflaeche?e.wohnflaeche+' m2':null),(e.zimmer?e.zimmer+' Zi.':null)].filter(Boolean).join(' \u00b7 ');
+    doc.text(e.bezeichnung+(meta?'   ('+meta+')':''),ML,y);
+    const mv=[...(e.mietverhaeltnisse||[])].sort((a,b)=>String(b.einzug||'').localeCompare(String(a.einzug||'')));
+    let rows=mv.map(m=>[m.mieter||'\u2014',fmtDate(m.einzug),m.auszug?fmtDate(m.auszug):'laufend',eur(m.kaltmiete),eur(m.nkVoraus),eur(m.kaution),m.auszug?'Archiv':'aktiv']);
+    if(rows.length===0) rows=[[{content:'Noch kein Mietverh\u00e4ltnis erfasst.',colSpan:7,styles:{textColor:[136,136,136],fontStyle:'italic'}}]];
+    doc.autoTable({ startY:y+2.5, margin:{left:ML,right:MR,bottom:MB+8},
+      head:[['Mieter','Einzug','Auszug','Kaltmiete','NK-Voraus.','Kaution','Status']], body:rows,
+      theme:'grid', showHead:'everyPage',
+      styles:{font:'helvetica',fontSize:8.5,textColor:[34,34,34],cellPadding:{top:2,bottom:2,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15,overflow:'linebreak'},
+      headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:8.5},
+      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:20},2:{cellWidth:20},3:{cellWidth:22,halign:'right'},4:{cellWidth:23,halign:'right'},5:{cellWidth:20,halign:'right'},6:{cellWidth:16,halign:'center'}},
+      didDrawPage:foot });
+    y=doc.lastAutoTable.finalY+9;
+  });
+  if(eh.length===0){ doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(136,136,136); doc.text('Noch keine Einheiten angelegt.',ML,y); y+=9; }
+  const dk=o.dokumente||[];
+  if(dk.length){
+    if(y>P.PAGE_H-MB-30){ doc.addPage(); y=P.MARGIN_T; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); doc.text('Dokumente',ML,y);
+    doc.autoTable({ startY:y+2.5, margin:{left:ML,right:MR,bottom:MB+8},
+      head:[['Bezeichnung','Art','Datum']], body:dk.map(d=>[d.name,d.art||'Dokument',fmtDate(d.datum)]),
+      theme:'grid', showHead:'everyPage',
+      styles:{font:'helvetica',fontSize:8.5,textColor:[34,34,34],cellPadding:{top:2,bottom:2,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15},
+      headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:8.5},
+      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:34},2:{cellWidth:26}}, didDrawPage:foot });
+  }
+  doc.save('Objekt-Datenblatt_'+(o.bezeichnung||'Objekt').replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/ +/g,'_')+'.pdf');
+}
+
+/* ---------- PDF: Briefkopf-Vorschau (leeres Musterformular) ---------- */
+function briefkopfDemoPdf(){
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte einen Moment und erneut klicken.'); return; }
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, rx=P.PAGE_W-P.MARGIN_R;
+  let y=tw_drawBriefkopfHeader(doc);
+  y=tw_drawEmpfaengerBlock(doc,y,{name:'Mustermieter',zusatz:'Musterwohnung \u00b7 EG',strasse:'Musterstra\u00dfe 1',plzOrt:'56472 Nisterau',datum:new Date()});
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(17,17,17); doc.text('Briefkopf-Vorschau',ML,y); y+=8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(51,51,51);
+  const txt='Dies ist die Vorschau des einheitlichen Briefkopfs der Thomas Willwacher Hausverwaltung. Jedes Formular und jede Abrechnung erscheint k\u00fcnftig in genau diesem Layout \u2013 Logo, Adressblock, rote Trennlinie und Fu\u00dfzeile sind f\u00fcr alle Dokumente identisch. So entsteht ein durchg\u00e4ngiger Wiedererkennungswert.';
+  doc.text(doc.splitTextToSize(txt,rx-ML),ML,y);
+  tw_drawBriefkopfFooter(doc,1);
+  doc.save('Briefkopf-Vorschau.pdf');
+}
+
+/* ---------- Finder ---------- */
+function _o(id){ return state.objekte.find(x=>x.id===id); }
+function _e(o,id){ return (o.einheiten||[]).find(x=>x.id===id); }
+
+/* ---------- Einheit-Modal ---------- */
+function openEinheitModal(objId, ehId){
+  const o=_o(objId); const e=ehId?_e(o,ehId):null;
+  document.getElementById('mTitle').textContent=e?'Einheit bearbeiten':'Neue Einheit';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Bezeichnung *</label><input id="e_bez" value="'+esc(e?e.bezeichnung:'')+'" placeholder="z. B. Whg 1 \u00b7 EG links"></div>'
+    +'<div class="row2"><div class="field"><label>Wohnfl\u00e4che (m\u00b2)</label><input id="e_qm" type="number" step="0.01" value="'+(e&&e.wohnflaeche?e.wohnflaeche:'')+'" placeholder="78"></div>'
+    +'<div class="field"><label>Zimmer</label><input id="e_zi" type="number" step="0.5" value="'+(e&&e.zimmer?e.zimmer:'')+'" placeholder="3"></div></div>';
+  document.getElementById('mFoot').innerHTML=
+     '<button class="btn btn-red" onclick="closeModal()">Abbrechen</button>'
+    +'<button class="btn btn-blue" onclick="saveEinheit(\''+objId+'\',\''+(ehId||'')+'\')">'+(e?'Speichern':'Anlegen')+'</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('e_bez'); if(f)f.focus();},60);
+}
+function saveEinheit(objId, ehId){
+  const o=_o(objId); const g=x=>document.getElementById(x);
+  const bez=g('e_bez').value.trim(); if(!bez){ g('e_bez').focus(); g('e_bez').style.borderColor='var(--accent-red)'; return; }
+  const data={bezeichnung:bez,wohnflaeche:parseFloat(g('e_qm').value)||0,zimmer:parseFloat(g('e_zi').value)||null};
+  if(ehId){ Object.assign(_e(o,ehId),data); }
+  else{ o.einheiten=o.einheiten||[]; o.einheiten.push({id:uid(),...data,mietverhaeltnisse:[]}); }
+  o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function deleteEinheit(objId, ehId){
+  const o=_o(objId); const e=_e(o,ehId);
+  document.getElementById('mTitle').textContent='Einheit entfernen';
+  document.getElementById('mBody').innerHTML='<p class="q">Einheit <b>'+esc(e.bezeichnung)+'</b> samt aller Mietverh\u00e4ltnisse entfernen?</p>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-red" onclick="confirmDeleteEinheit(\''+objId+'\',\''+ehId+'\')">Entfernen</button>';
+  openModal();
+}
+function confirmDeleteEinheit(objId, ehId){ const o=_o(objId); o.einheiten=o.einheiten.filter(x=>x.id!==ehId); o.geaendert=Date.now(); save(); closeModal(); render(); }
+
+/* ---------- Mietverhältnis-Modal ---------- */
+function openMvModal(objId, ehId, mvId){
+  const o=_o(objId); const e=_e(o,ehId); const m=mvId?(e.mietverhaeltnisse||[]).find(x=>x.id===mvId):null;
+  document.getElementById('mTitle').textContent=m?'Mietverh\u00e4ltnis bearbeiten':'Neues Mietverh\u00e4ltnis';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Mieter *</label><input id="m_name" value="'+esc(m?m.mieter:'')+'" placeholder="Name / Familie"></div>'
+    +'<div class="row2"><div class="field"><label>Einzug</label><input id="m_ein" type="date" value="'+(m&&m.einzug?m.einzug:'')+'"></div>'
+    +'<div class="field"><label>Auszug (leer = laufend)</label><input id="m_aus" type="date" value="'+(m&&m.auszug?m.auszug:'')+'"></div></div>'
+    +'<div class="row2"><div class="field"><label>Kaltmiete (\u20ac/Mon.)</label><input id="m_km" type="number" step="0.01" value="'+(m&&m.kaltmiete?m.kaltmiete:'')+'" placeholder="640"></div>'
+    +'<div class="field"><label>NK-Voraus. (\u20ac/Mon.)</label><input id="m_nk" type="number" step="0.01" value="'+(m&&m.nkVoraus?m.nkVoraus:'')+'" placeholder="160"></div></div>'
+    +'<div class="field"><label>Kaution (\u20ac)</label><input id="m_ka" type="number" step="0.01" value="'+(m&&m.kaution?m.kaution:'')+'" placeholder="1920"></div>'
+    +'<div class="field"><label>Notiz</label><textarea id="m_notiz" placeholder="Vertragsnotiz">'+esc(m?m.notiz:'')+'</textarea></div>';
+  document.getElementById('mFoot').innerHTML=
+     '<button class="btn btn-red" onclick="closeModal()">Abbrechen</button>'
+    +'<button class="btn btn-blue" onclick="saveMv(\''+objId+'\',\''+ehId+'\',\''+(mvId||'')+'\')">'+(m?'Speichern':'Anlegen')+'</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('m_name'); if(f)f.focus();},60);
+}
+function saveMv(objId, ehId, mvId){
+  const o=_o(objId); const e=_e(o,ehId); const g=x=>document.getElementById(x);
+  const name=g('m_name').value.trim(); if(!name){ g('m_name').focus(); g('m_name').style.borderColor='var(--accent-red)'; return; }
+  const data={mieter:name,einzug:g('m_ein').value||null,auszug:g('m_aus').value||null,
+    kaltmiete:parseFloat(g('m_km').value)||0,nkVoraus:parseFloat(g('m_nk').value)||0,kaution:parseFloat(g('m_ka').value)||0,
+    notiz:g('m_notiz').value.trim(),geaendert:Date.now()};
+  e.mietverhaeltnisse=e.mietverhaeltnisse||[];
+  if(mvId){ Object.assign(e.mietverhaeltnisse.find(x=>x.id===mvId),data); }
+  else{ e.mietverhaeltnisse.push({id:uid(),...data}); }
+  o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function endMv(objId, ehId, mvId){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('mTitle').textContent='Auszug eintragen';
+  document.getElementById('mBody').innerHTML='<p class="q" style="margin-bottom:12px">Auszugsdatum festlegen. Das Mietverh\u00e4ltnis bleibt als <b>Archiv</b> unter der Einheit erhalten.</p>'
+    +'<div class="field"><label>Auszug am</label><input id="m_ausdate" type="date" value="'+today+'"></div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-blue" onclick="confirmEndMv(\''+objId+'\',\''+ehId+'\',\''+mvId+'\')">Auszug speichern</button>';
+  openModal();
+}
+function confirmEndMv(objId, ehId, mvId){
+  const o=_o(objId); const e=_e(o,ehId); const m=e.mietverhaeltnisse.find(x=>x.id===mvId);
+  m.auszug=document.getElementById('m_ausdate').value||new Date().toISOString().slice(0,10); m.geaendert=Date.now();
+  o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function deleteMv(objId, ehId, mvId){
+  const o=_o(objId); const e=_e(o,ehId); const m=e.mietverhaeltnisse.find(x=>x.id===mvId);
+  document.getElementById('mTitle').textContent='Mietverh\u00e4ltnis entfernen';
+  document.getElementById('mBody').innerHTML='<p class="q">Mietverh\u00e4ltnis <b>'+esc(m.mieter)+'</b> wirklich l\u00f6schen? Zum Beenden besser \u201eAuszug eintragen\u201c nutzen \u2013 so bleibt die Historie erhalten.</p>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-red" onclick="confirmDeleteMv(\''+objId+'\',\''+ehId+'\',\''+mvId+'\')">Entfernen</button>';
+  openModal();
+}
+function confirmDeleteMv(objId, ehId, mvId){ const o=_o(objId); const e=_e(o,ehId); e.mietverhaeltnisse=e.mietverhaeltnisse.filter(x=>x.id!==mvId); o.geaendert=Date.now(); save(); closeModal(); render(); }
+
+/* ---------- Dokument-Modal ---------- */
+function openDokModal(objId){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('mTitle').textContent='Dokument vermerken';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Bezeichnung *</label><input id="d_name" placeholder="z. B. Mietvertrag Fam. Becker"></div>'
+    +'<div class="field"><label>Art</label><select id="d_art"><option>Vertrag</option><option>Protokoll</option><option>Abrechnung</option><option>Schreiben</option><option>Sonstiges</option></select></div>'
+    +'<div class="field"><label>Datum</label><input id="d_datum" type="date" value="'+today+'"></div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-blue" onclick="saveDok(\''+objId+'\')">Vermerken</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('d_name'); if(f)f.focus();},60);
+}
+function saveDok(objId){
+  const o=_o(objId); const g=x=>document.getElementById(x);
+  const name=g('d_name').value.trim(); if(!name){ g('d_name').focus(); g('d_name').style.borderColor='var(--accent-red)'; return; }
+  o.dokumente=o.dokumente||[]; o.dokumente.unshift({id:uid(),name,art:g('d_art').value,datum:g('d_datum').value||null});
+  o.geaendert=Date.now(); save(); closeModal(); render();
+}
+function deleteDok(objId, dokId){ const o=_o(objId); o.dokumente=(o.dokumente||[]).filter(x=>x.id!==dokId); o.geaendert=Date.now(); save(); render(); }
+
+/* ---------- Objekt-Modal ---------- */
+function openObjektModal(id){
+  const o=id?state.objekte.find(x=>x.id===id):null;
+  document.getElementById('mTitle').textContent=o?'Objekt bearbeiten':'Neues Objekt';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Objektart</label><select id="f_art">'
+    +'<option value="einzel"'+(o&&o.art==='einzel'?' selected':'')+'>Einzelimmobilie (eine Einheit)</option>'
+    +'<option value="mfh"'+(o&&o.art==='mfh'?' selected':'')+'>Mehrfamilienhaus (mehrere Einheiten)</option>'
+    +'<option value="weg"'+(o&&o.art==='weg'?' selected':'')+'>WEG-Eigentum</option>'
+    +'<option value="eigen"'+(o&&o.art==='eigen'?' selected':'')+'>Eigennutzung</option>'
+    +'</select><div class="hint">Einzelimmobilie & Eigennutzung erhalten automatisch eine Einheit.</div></div>'
+    +'<div class="field"><label>Bezeichnung *</label><input id="f_bez" value="'+esc(o?o.bezeichnung:'')+'" placeholder="z. B. Haus Flurweg 14a"></div>'
+    +'<div class="field"><label>Stra\u00dfe & Hausnr.</label><input id="f_str" value="'+esc(o?o.strasse:'')+'" placeholder="Musterstra\u00dfe 1"></div>'
+    +'<div class="row2"><div class="field"><label>PLZ</label><input id="f_plz" value="'+esc(o?o.plz:'')+'" placeholder="56472"></div>'
+    +'<div class="field"><label>Ort</label><input id="f_ort" value="'+esc(o?o.ort:'')+'" placeholder="Nisterau"></div></div>'
+    +'<div class="row2"><div class="field"><label>Baujahr</label><input id="f_bj" type="number" value="'+(o&&o.baujahr?o.baujahr:'')+'" placeholder="1998"></div>'
+    +'<div class="field"><label>Wohnfl\u00e4che (m\u00b2)</label><input id="f_qm" type="number" step="0.01" value="'+(o&&o.gesamtwohnflaeche?o.gesamtwohnflaeche:'')+'" placeholder="120"></div></div>'
+    +'<div class="field"><label>Heizung</label><input id="f_heiz" value="'+esc(o?o.heizung:'')+'" placeholder="\u00d6l-Zentralheizung"></div>'
+    +'<div class="field"><label>Notiz</label><textarea id="f_notiz" placeholder="frei">'+esc(o?o.notiz:'')+'</textarea></div>';
+  document.getElementById('mFoot').innerHTML=
+     '<button class="btn btn-red" onclick="closeModal()">Abbrechen</button>'
+    +'<button class="btn btn-blue" onclick="saveObjekt(\''+(id||'')+'\')">'+(o?'Speichern':'Anlegen')+'</button>';
+  openModal(); setTimeout(()=>{const f=document.getElementById('f_bez'); if(f)f.focus();},60);
+}
+function saveObjekt(id){
+  const g=x=>document.getElementById(x);
+  const bez=g('f_bez').value.trim();
+  if(!bez){ g('f_bez').focus(); g('f_bez').style.borderColor='var(--accent-red)'; return; }
+  const art=g('f_art').value, qm=parseFloat(g('f_qm').value)||0;
+  const data={art,bezeichnung:bez,strasse:g('f_str').value.trim(),plz:g('f_plz').value.trim(),ort:g('f_ort').value.trim(),
+    baujahr:parseInt(g('f_bj').value)||null,gesamtwohnflaeche:qm,heizung:g('f_heiz').value.trim(),notiz:g('f_notiz').value.trim(),geaendert:Date.now()};
+  if(id){ Object.assign(state.objekte.find(x=>x.id===id),data); }
+  else{
+    const einheiten=(art==='einzel'||art==='eigen')?[{id:uid(),bezeichnung:'Gesamtobjekt',wohnflaeche:qm,zimmer:null,mietverhaeltnisse:[]}]:[];
+    state.objekte.push({id:uid(),...data,einheiten,dokumente:[],ruecklage:art==='weg'?{stand:0,bewegungen:[]}:null,mea:null});
+  }
+  save(); closeModal();
+  if(view==='home') render(); else go(id?'detail':'home', id||null);
+}
+function deleteObjekt(id){
+  const o=state.objekte.find(x=>x.id===id);
+  document.getElementById('mTitle').textContent='Objekt l\u00f6schen';
+  document.getElementById('mBody').innerHTML='<p class="q">Soll das Objekt <b>'+esc(o.bezeichnung)+'</b> samt aller hinterlegten Daten unwiderruflich gel\u00f6scht werden?</p>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-red" onclick="confirmDelete(\''+id+'\')">Endg\u00fcltig l\u00f6schen</button>';
+  openModal();
+}
+function confirmDelete(id){ state.objekte=state.objekte.filter(x=>x.id!==id); save(); closeModal(); go('home'); }
+
+/* ---------- Beispielobjekt ---------- */
+function loadBeispiel(){
+  state.objekte.push({id:uid(),art:'mfh',bezeichnung:'Haus Flurweg 14a',strasse:'Flurweg 14a',plz:'56472',ort:'Nisterau',
+    baujahr:1996,gesamtwohnflaeche:210,heizung:'\u00d6l-Zentralheizung',notiz:'Beispielobjekt \u2013 jederzeit l\u00f6schbar.',
+    geaendert:Date.now(),dokumente:[],ruecklage:null,mea:null,
+    einheiten:[
+      {id:uid(),bezeichnung:'Whg 1 \u00b7 EG links',wohnflaeche:78,zimmer:3,mietverhaeltnisse:[{id:uid(),mieter:'Fam. Becker',einzug:'2021-04-01',auszug:null,kaltmiete:640,nkVoraus:160,kaution:1920,notiz:''}]},
+      {id:uid(),bezeichnung:'Whg 2 \u00b7 OG rechts',wohnflaeche:92,zimmer:4,mietverhaeltnisse:[]}
+    ]});
+  save(); render();
+}
+
+/* ---------- Sichern / Einspielen / Löschen ---------- */
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='hausverwaltung-sicherung-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+document.getElementById('importFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d||!Array.isArray(d.objekte))throw 0; state=d; save(); go('home'); }
+    catch(err){ alert('Datei konnte nicht gelesen werden. Bitte eine g\u00fcltige Sicherungsdatei w\u00e4hlen.'); } };
+  r.readAsText(f); e.target.value='';
+});
+function wipe(){
+  document.getElementById('mTitle').textContent='Alle Daten l\u00f6schen';
+  document.getElementById('mBody').innerHTML='<p class="q">Wirklich <b>alle Objekte und Daten</b> unwiderruflich l\u00f6schen? Vorher ggf. sichern.</p>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-red" onclick="confirmWipe()">Ja, alles l\u00f6schen</button>';
+  openModal();
+}
+function confirmWipe(){ state={objekte:[],einstellungen:{version:'1.0'}}; save(); closeModal(); go('home'); }
+
+/* ---------- Modal-Steuerung ---------- */
+function openModal(){ document.getElementById('overlay').classList.add('open'); }
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+/* ---------- Start ---------- */
+(async()=>{ await load(); render(); })();
+</script>
+</body>
+</html>
