@@ -159,6 +159,30 @@ body::before{
 .weg .frm{font-size:11px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif;margin:2px 0 4px}
 .disc{font-size:11px;color:var(--text-muted);font-style:italic;font-family:'Source Sans 3',sans-serif;margin-top:14px;line-height:1.5;text-align:center}
 
+/* Druck-Button (auf allen Modulseiten) */
+#printFab{position:fixed;right:16px;bottom:18px;width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#1E88E5,#1565C0);box-shadow:0 6px 18px rgba(30,136,229,.4);display:none;align-items:center;justify-content:center;z-index:50}
+#printFab:hover{transform:translateY(-2px)}
+.print-head{display:none}
+
+/* Druckbild: helles, sauber ausdruckbares Layout (Tabellen inklusive) */
+@media print{
+  @page{margin:14mm}
+  body{background:#fff!important}
+  body::before{display:none!important}
+  #printFab,.add-row,.mini,.btn,button,.overlay,.no-print{display:none!important}
+  .page{max-width:100%!important;margin:0!important;padding:0!important}
+  .kopf .logo{display:none!important}
+  .print-head{display:block!important;font-family:'Oswald',sans-serif;font-weight:700;color:#111;border-bottom:2px solid #c41e1e;padding-bottom:6px;margin-bottom:14px;font-size:14px}
+  .titel{color:#111!important}.label{color:#c41e1e!important}
+  .card{background:#fff!important;border:1px solid #ccc!important;box-shadow:none!important;break-inside:avoid;color:#111!important}
+  .card h3,.weg h4{color:#111!important;border-color:#ccc!important}
+  .kv span,.dok-row .di span,.hint,.weg .ln,.disc,.nk-result .sub,.nk-result .lbl{color:#444!important}
+  .kv b,.dok-row b,.weg .ln b,.nk-result .big{color:#111!important}
+  .nk-result{background:#fff!important;border:1px solid #999!important}
+  .nk-nach{color:#c41e1e!important}.nk-erst{color:#1b7a3d!important}
+  .dok-row{border-color:#ddd!important;break-inside:avoid}
+}
+
 /* Hinweis-Box */
 .notice{padding:14px 16px;border-radius:var(--radius-md);background:rgba(232,126,34,0.08);border:1px solid rgba(232,126,34,0.3);margin-bottom:14px}
 .notice b{display:block;color:var(--accent-orange-light);font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -210,6 +234,7 @@ body::before{
 </head>
 <body>
 <div class="page" id="view"></div>
+<button id="printFab" title="Diese Seite drucken" onclick="window.print()" aria-label="Drucken"><svg viewBox="0 0 32 32" width="22" height="22"><path d="M8 13V5h16v8" stroke="#fff" stroke-width="2" fill="none"/><rect x="4" y="13" width="24" height="10" rx="2" stroke="#fff" stroke-width="2" fill="none"/><rect x="9" y="18" width="14" height="9" stroke="#fff" stroke-width="1.6" fill="none"/></svg></button>
 
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal" role="dialog" aria-modal="true">
@@ -331,6 +356,8 @@ const I={
   weg:'<path d="M4 27V11l12-7 12 7v16" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><line x1="2" y1="27" x2="30" y2="27" stroke="white" stroke-width="2"/><rect x="12" y="18" width="8" height="9" stroke="white" stroke-width="1.5" fill="none"/><circle cx="16" cy="11" r="2" fill="white"/>',
   recht:'<line x1="16" y1="4" x2="16" y2="28" stroke="white" stroke-width="2"/><line x1="7" y1="9" x2="25" y2="9" stroke="white" stroke-width="2"/><path d="M7 9l-3 8a4 4 0 008 0L9 9M25 9l-3 8a4 4 0 008 0l-3-8" stroke="white" stroke-width="1.6" fill="none"/>',
   stamm:'<circle cx="16" cy="16" r="4" stroke="white" stroke-width="2" fill="none"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3" stroke="white" stroke-width="1.6"/>',
+  kasse:'<rect x="3" y="8" width="26" height="16" rx="2" stroke="white" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="3.6" stroke="white" stroke-width="2" fill="none"/><line x1="7" y1="12" x2="7" y2="20" stroke="white" stroke-width="1.6"/><line x1="25" y1="12" x2="25" y2="20" stroke="white" stroke-width="1.6"/>',
+  brief:'<rect x="4" y="7" width="24" height="18" rx="2" stroke="white" stroke-width="2" fill="none"/><path d="M5 9l11 8 11-8" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/>',
   plus:'<path d="M16 6v20M6 16h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
 };
 const svgWrap=p=>'<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">'+p+'</svg>';
@@ -346,7 +373,8 @@ function logoHTML(scale){
     +'</div></div>';
 }
 function kopf(titel,label,scale){
-  return '<div class="kopf">'+logoHTML(scale||0.6)
+  return '<div class="print-head">Thomas Willwacher Hausverwaltung \u2013 Flurweg 14a, 56472 Nisterau</div>'
+    +'<div class="kopf">'+logoHTML(scale||0.6)
     +(titel?'<div class="titel">'+esc(titel)+'</div>':'')
     +(label?'<div class="label">'+esc(label)+'</div>':'')+'</div>';
 }
@@ -370,7 +398,9 @@ function render(){
   else if(view==='stamm') el.innerHTML=renderStamm();
   else if(view==='nk') el.innerHTML=renderNk();
   else if(view==='weg') el.innerHTML=renderWeg();
+  else if(view==='kasse') el.innerHTML=renderKasse();
   else el.innerHTML=renderSoon(view);
+  const fab=document.getElementById('printFab'); if(fab) fab.style.display=(view==='home')?'none':'flex';
 }
 
 /* ---------- Startseite: Logo + Hausverwaltung + Objektauswahl ---------- */
@@ -405,6 +435,7 @@ function renderHome(){
 
   // Verwaltung (weitere Module)
   const verw='<div class="sec-label reveal d2"><span>Verwaltung</span></div><div class="reveal d2">'
+    +navTile(I.kasse,'Kasse','Einnahmen, Forderungen, Mahnungen','kasse',true)
     +navTile(I.nk,'Nebenkostenabrechnung','Abrechnung nach Ihrer Vorlage','nk',true)
     +navTile(I.weg,'Eigentum & R\u00fccklagen','WEG, Erhaltungsr\u00fccklage','weg',true)
     +navTile(I.recht,'Rechtsgrundlagen','BGB, BetrKV, HeizkostenV, WEG','recht',false)
@@ -809,6 +840,194 @@ function nkPdf(){
 }
 
 /* ============================================================
+   KASSE  ·  Einnahmen, Forderungen, Mahnungen
+   Bucht Miete/Kaution/NK/Sonstiges, zeigt Soll/Ist-Fehlbetraege,
+   erstellt Mahnungen (PDF/Mail/Druck) mit direkter Personen-/
+   Wohnungs-Uebernahme. Kassenbuch als PDF im Briefkopf.
+   ============================================================ */
+const KASSE_ART={miete:'Miete',kaution:'Kaution',nk:'NK-Nachzahlung',sonstige:'Sonstige Einnahme',ausgabe:'Ausgabe'};
+let kasseObjFilter='', kasseJahr=null;
+function kasseEnsure(){ state.kasse=state.kasse||{buchungen:[]}; }
+
+/* Personen-/Wohnungs-Uebernahme: zentral fuer Formulare & Mahnungen */
+function empfaengerFromEinheit(o,einheitId){
+  const e=(o.einheiten||[]).find(x=>x.id===einheitId);
+  const akt=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+  const adr=[o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  return { name:(akt&&akt.mieter)||'', einheit:e?e.bezeichnung:'', adresse:adr, email:(akt&&akt.email)||'' };
+}
+function monthsActiveInYear(mv,Y){
+  const j1=new Date(Y,0,1), d31=new Date(Y,11,31);
+  let s=mv.einzug?new Date(mv.einzug):j1; if(s<j1)s=j1;
+  let e=mv.auszug?new Date(mv.auszug):d31; if(e>d31)e=d31;
+  if(isNaN(s.getTime())||isNaN(e.getTime())||s>e) return 0;
+  return Math.max(0,Math.min(12,(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth())+1));
+}
+function kasseSollIst(objFilter,Y){
+  kasseEnsure(); const rows=[];
+  state.objekte.filter(o=>!objFilter||o.id===objFilter).forEach(o=>{
+    (o.einheiten||[]).forEach(e=>{
+      let soll=0; (e.mietverhaeltnisse||[]).forEach(mv=>{ const mm=monthsActiveInYear(mv,Y); if(mm>0) soll+=((Number(mv.kaltmiete)||0)+(Number(mv.nkVoraus)||0))*mm; });
+      const akt=(e.mietverhaeltnisse||[]).find(m=>!m.auszug); const mieter=akt?akt.mieter:(((e.mietverhaeltnisse||[])[0]||{}).mieter||'');
+      const ist=(state.kasse.buchungen||[]).filter(b=>b.art==='miete'&&b.einheitId===e.id&&b.datum&&new Date(b.datum).getFullYear()===Y).reduce((s,b)=>s+(Number(b.betrag)||0),0);
+      if(soll>0||ist>0) rows.push({objektId:o.id,einheitId:e.id,einheit:e.bezeichnung,objekt:o.bezeichnung,mieter,soll,ist,fehl:Math.max(0,soll-ist)});
+    });
+  });
+  return rows;
+}
+function kasseSetObj(v){ kasseObjFilter=v; render(); }
+function kasseSetJahr(v){ const j=(v||'').trim(); if(j) kasseJahr=j; render(); }
+
+function renderKasse(){
+  kasseEnsure();
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  if(!kasseJahr) kasseJahr=String(new Date().getFullYear());
+  const Y=parseInt(kasseJahr)||new Date().getFullYear();
+  const objOpts='<option value="">Alle Objekte</option>'+state.objekte.map(o=>'<option value="'+o.id+'"'+(kasseObjFilter===o.id?' selected':'')+'>'+esc(o.bezeichnung)+'</option>').join('');
+  const filt='<div class="card reveal"><h3>Kassenbuch</h3><div class="row2"><div class="field"><label>Objekt</label><select onchange="kasseSetObj(this.value)">'+objOpts+'</select></div><div class="field"><label>Jahr</label><input type="text" inputmode="numeric" value="'+esc(kasseJahr)+'" onchange="kasseSetJahr(this.value)"></div></div></div>';
+  let bu=(state.kasse.buchungen||[]).filter(b=>(!kasseObjFilter||b.objektId===kasseObjFilter)&&(!b.datum||new Date(b.datum).getFullYear()===Y));
+  bu=[...bu].sort((a,b)=>String(b.datum||'').localeCompare(String(a.datum||'')));
+  const einnahmen=bu.filter(b=>b.art!=='ausgabe').reduce((s,b)=>s+(Number(b.betrag)||0),0);
+  const ausgaben=bu.filter(b=>b.art==='ausgabe').reduce((s,b)=>s+(Number(b.betrag)||0),0);
+  const sollIst=kasseSollIst(kasseObjFilter,Y);
+  const offen=sollIst.reduce((s,r)=>s+r.fehl,0);
+
+  const strip='<div class="nk-result reveal d1"><div><div class="lbl">Einnahmen '+Y+'</div><div class="big nk-erst">'+eur(einnahmen)+'</div>'+(ausgaben>0?'<div class="sub">abz. Ausgaben '+eur(ausgaben)+'</div>':'')+'</div>'
+    +'<div style="text-align:right"><div class="lbl">Offene Forderungen</div><div class="big '+(offen>0?'nk-nach':'nk-erst')+'">'+eur(offen)+'</div><div class="sub">Soll vs. Ist (Miete)</div></div></div>';
+  const byType=Object.keys(KASSE_ART).filter(k=>k!=='ausgabe').map(k=>{ const v=bu.filter(b=>b.art===k).reduce((s,b)=>s+(Number(b.betrag)||0),0); return v>0?nkLn(KASSE_ART[k],eur(v)):''; }).join('');
+  const byCard=(byType||ausgaben>0)?'<div class="card weg reveal d1"><h3>Einnahmen nach Art</h3>'+byType+(ausgaben>0?nkLn('Ausgaben','\u2212 '+eur(ausgaben),true):'')+'</div>':'';
+
+  const siRows=sollIst.map(r=>'<div class="dok-row"><div class="di"><b>'+esc(r.einheit)+(r.mieter?' \u00b7 '+esc(r.mieter):'')+'</b><span>Soll '+eur(r.soll)+' \u00b7 Ist '+eur(r.ist)+'</span></div>'
+    +'<span style="font-family:Oswald,sans-serif;font-weight:700;color:'+(r.fehl>0?'var(--accent-red-light)':'var(--success)')+'">'+(r.fehl>0?eur(r.fehl):'\u2713')+'</span>'
+    +(r.fehl>0?'<button class="mini" onclick="openMahnungModal(\''+r.objektId+'\',\''+r.einheitId+'\','+r.fehl.toFixed(2)+','+Y+')">Mahnung</button>':'')+'</div>').join('');
+  const siCard='<div class="card reveal d2"><div class="panel-head"><h3>Soll / Ist je Einheit \u00b7 '+Y+'</h3></div>'+(siRows||'<div class="leer-hint">Keine Mietverh\u00e4ltnisse im Zeitraum.</div>')+'</div>';
+
+  const liste=bu.length?bu.map(b=>{ const o=_o(b.objektId); const ein=b.art!=='ausgabe';
+    return '<div class="dok-row"><div class="di"><b>'+KASSE_ART[b.art]+(b.person?' \u00b7 '+esc(b.person):'')+'</b><span>'+fmtDate(b.datum)+(o?' \u00b7 '+esc(o.bezeichnung):'')+(b.zweck?' \u00b7 '+esc(b.zweck):'')+'</span></div>'
+    +'<span style="font-family:Oswald,sans-serif;font-weight:700;color:'+(ein?'var(--success)':'var(--accent-red-light)')+'">'+(ein?'+ ':'\u2212 ')+eur(b.betrag)+'</span>'
+    +'<button class="mini" onclick="openBuchungModal(\''+b.id+'\')">Bearb.</button><button class="mini red" onclick="deleteBuchung(\''+b.id+'\')">Entf.</button></div>';
+  }).join(''):'<div class="leer-hint">Noch keine Buchungen.</div>';
+  const listCard='<div class="card reveal d2"><div class="panel-head"><h3>Buchungen \u00b7 '+Y+'</h3></div>'+liste
+    +'<button class="add-row" onclick="openBuchungModal()">+ Buchung erfassen</button>'
+    +'<button class="add-row" onclick="kassenbuchPdf()">Kassenbuch als PDF</button></div>';
+
+  const disc='<div class="disc reveal">Soll = vertragliche Miete (kalt + NK-Voraus.) \u00d7 aktive Monate. Ist = gebuchte Mietzahlungen. Informationswerkzeug, keine Buchhaltung im Sinne der GoBD.</div>';
+  return kopf('Kasse','Einnahmen & Forderungen',0.55)+filt+strip+byCard+siCard+listCard+disc+back;
+}
+
+/* Buchung erfassen/bearbeiten — mit Objekt -> Einheit -> Mieter-Uebernahme */
+function openBuchungModal(bId){
+  kasseEnsure();
+  const b=bId?state.kasse.buchungen.find(x=>x.id===bId):null;
+  const today=new Date().toISOString().slice(0,10);
+  const objOpts='<option value="">\u2013</option>'+state.objekte.map(o=>'<option value="'+o.id+'"'+((b&&b.objektId===o.id)?' selected':'')+'>'+esc(o.bezeichnung)+'</option>').join('');
+  const artOpts=Object.keys(KASSE_ART).map(k=>'<option value="'+k+'"'+((b&&b.art===k)?' selected':'')+'>'+KASSE_ART[k]+'</option>').join('');
+  document.getElementById('mTitle').textContent=bId?'Buchung bearbeiten':'Buchung erfassen';
+  document.getElementById('mBody').innerHTML=
+     '<div class="row2"><div class="field"><label>Art</label><select id="k_art">'+artOpts+'</select></div><div class="field"><label>Datum</label><input id="k_datum" type="date" value="'+(b?b.datum:today)+'"></div></div>'
+    +'<div class="field"><label>Betrag (\u20ac)</label><input id="k_betrag" type="text" inputmode="decimal" value="'+(b?esc(String(b.betrag)):'')+'" placeholder="0,00"></div>'
+    +'<div class="field"><label>Objekt</label><select id="k_obj" onchange="kasseObjChange()">'+objOpts+'</select></div>'
+    +'<div class="field"><label>Einheit / Wohnung</label><select id="k_einheit" onchange="kasseEinheitChange()"></select></div>'
+    +'<div class="field"><label>Person / Mieter</label><input id="k_person" value="'+(b?esc(b.person||''):'')+'" placeholder="wird aus Mietverh\u00e4ltnis \u00fcbernommen"></div>'
+    +'<div class="field"><label>Zweck / Notiz</label><input id="k_zweck" value="'+(b?esc(b.zweck||''):'')+'" placeholder="z. B. Miete April '+(new Date().getFullYear())+'"></div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-blue" onclick="saveBuchung(\''+(bId||'')+'\')">Speichern</button>';
+  openModal();
+  kasseObjChange(b?b.einheitId:null,b?b.person:null);
+  setTimeout(()=>{const f=document.getElementById('k_betrag'); if(f)f.focus();},60);
+}
+function kasseObjChange(preEinheitId,prePerson){
+  const objSel=document.getElementById('k_obj'); if(!objSel)return;
+  const o=_o(objSel.value), eSel=document.getElementById('k_einheit'); const eh=(o&&o.einheiten)||[];
+  eSel.innerHTML='<option value="">\u2013 keine \u2013</option>'+eh.map(e=>'<option value="'+e.id+'"'+(preEinheitId===e.id?' selected':'')+'>'+esc(e.bezeichnung)+'</option>').join('');
+  kasseEinheitChange(typeof prePerson==='string'?prePerson:undefined);
+}
+function kasseEinheitChange(prePerson){
+  const objSel=document.getElementById('k_obj'), eSel=document.getElementById('k_einheit'), pIn=document.getElementById('k_person');
+  if(!objSel||!eSel||!pIn)return;
+  if(typeof prePerson==='string'){ if(prePerson) pIn.value=prePerson; return; }
+  const o=_o(objSel.value), e=o&&(o.einheiten||[]).find(x=>x.id===eSel.value);
+  const akt=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+  if(akt) pIn.value=akt.mieter||'';
+}
+function saveBuchung(bId){
+  kasseEnsure(); const g=x=>document.getElementById(x);
+  const betrag=parseFloat(String(g('k_betrag').value).replace(',','.'))||0;
+  if(betrag<=0){ g('k_betrag').focus(); g('k_betrag').style.borderColor='var(--accent-red)'; return; }
+  const data={datum:g('k_datum').value||null,art:g('k_art').value,betrag,objektId:g('k_obj').value||null,einheitId:g('k_einheit').value||null,person:g('k_person').value.trim(),zweck:g('k_zweck').value.trim()};
+  if(bId){ Object.assign(state.kasse.buchungen.find(x=>x.id===bId),data); }
+  else{ state.kasse.buchungen.push({id:uid(),...data}); }
+  save(); closeModal(); render();
+}
+function deleteBuchung(bId){ kasseEnsure(); state.kasse.buchungen=state.kasse.buchungen.filter(x=>x.id!==bId); save(); render(); }
+
+/* Mahnung / Zahlungserinnerung — Person & Wohnung vorbefuellt */
+function openMahnungModal(objektId,einheitId,betrag,Y){
+  const o=_o(objektId), emp=empfaengerFromEinheit(o,einheitId);
+  const frist=new Date(); frist.setDate(frist.getDate()+14);
+  const betr='Zahlungserinnerung \u2013 offener Betrag '+eur(betrag);
+  const text='Sehr geehrte/r '+(emp.name||'Mieter/in')+',\n\nf\u00fcr die Wohnung '+(emp.einheit||'')+' im Objekt '+o.bezeichnung+' weisen unsere Unterlagen f\u00fcr das Jahr '+Y+' einen offenen Betrag von '+eur(betrag)+' aus.\n\nWir bitten Sie, den Betrag bis zum '+frist.toLocaleDateString('de-DE')+' auf das bekannte Konto zu \u00fcberweisen. Sollten Sie die Zahlung zwischenzeitlich veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos.\n\nMit freundlichen Gr\u00fc\u00dfen\nThomas Willwacher Hausverwaltung';
+  document.getElementById('mTitle').textContent='Mahnung / Zahlungserinnerung';
+  document.getElementById('mBody').innerHTML=
+     '<div class="field"><label>Empf\u00e4nger</label><input id="ma_name" value="'+esc(emp.name)+'"></div>'
+    +'<div class="row2"><div class="field"><label>Wohnung</label><input id="ma_einheit" value="'+esc(emp.einheit)+'"></div><div class="field"><label>E-Mail (optional)</label><input id="ma_email" value="'+esc(emp.email)+'" placeholder="f\u00fcr Mail-Versand"></div></div>'
+    +'<div class="field"><label>Betreff</label><input id="ma_betr" value="'+esc(betr)+'"></div>'
+    +'<div class="field"><label>Text</label><textarea id="ma_text" style="min-height:180px">'+esc(text)+'</textarea></div>'
+    +'<input type="hidden" id="ma_obj" value="'+objektId+'"><input type="hidden" id="ma_eh" value="'+einheitId+'">';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Schlie\u00dfen</button><button class="btn btn-ghost" onclick="mahnungMail()">Per E-Mail</button><button class="btn btn-ghost" onclick="mahnungPdf(\'print\')">\u00d6ffnen / Drucken</button><button class="btn btn-blue" onclick="mahnungPdf(\'save\')">Als PDF</button>';
+  openModal();
+}
+function mahnungMail(){
+  const g=x=>document.getElementById(x);
+  window.location.href='mailto:'+encodeURIComponent(g('ma_email').value.trim())+'?subject='+encodeURIComponent(g('ma_betr').value)+'&body='+encodeURIComponent(g('ma_text').value);
+}
+function mahnungPdf(mode){
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte gleich erneut.'); return; }
+  const g=x=>document.getElementById(x);
+  const o=_o(g('ma_obj').value), emp=empfaengerFromEinheit(o,g('ma_eh').value);
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, rx=P.PAGE_W-P.MARGIN_R;
+  let y=tw_drawBriefkopfHeader(doc);
+  y=tw_drawEmpfaengerBlock(doc,y,{name:g('ma_name').value,zusatz:(emp.einheit||'')+(emp.adresse?' \u00b7 '+emp.adresse:''),datum:new Date()});
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(17,17,17); doc.text(g('ma_betr').value,ML,y); y+=8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(40,40,40);
+  doc.text(doc.splitTextToSize(g('ma_text').value.replace(/\r/g,''),rx-ML),ML,y);
+  tw_drawBriefkopfFooter(doc,1);
+  if(mode==='print'){ try{ window.open(doc.output('bloburl'),'_blank'); }catch(e){ doc.save('Mahnung.pdf'); } }
+  else doc.save('Mahnung_'+String(g('ma_name').value||'Mieter').replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/ +/g,'_')+'.pdf');
+}
+
+/* PDF: Kassenbuch */
+function kassenbuchPdf(){
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte gleich erneut.'); return; }
+  kasseEnsure();
+  const Y=parseInt(kasseJahr)||new Date().getFullYear();
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR;
+  const foot=()=>tw_drawBriefkopfFooter(doc,doc.internal.getNumberOfPages());
+  const E=v=>eur(v).replace(/\u00a0/g,' ');
+  let bu=(state.kasse.buchungen||[]).filter(b=>(!kasseObjFilter||b.objektId===kasseObjFilter)&&(!b.datum||new Date(b.datum).getFullYear()===Y));
+  bu=[...bu].sort((a,b)=>String(a.datum||'').localeCompare(String(b.datum||'')));
+  let y=tw_drawBriefkopfHeader(doc);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(17,17,17); doc.text('Kassenbuch '+Y,ML,y+2);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(136,136,136);
+  doc.text((kasseObjFilter&&_o(kasseObjFilter)?_o(kasseObjFilter).bezeichnung:'Alle Objekte'),rx,y+2,{align:'right'}); y+=11;
+  let rows=bu.map(b=>{ const o=_o(b.objektId); const ein=b.art!=='ausgabe'; return [fmtDate(b.datum),KASSE_ART[b.art],o?o.bezeichnung:'',b.person||'',b.zweck||'',(ein?'+ ':'- ')+E(b.betrag)]; });
+  if(rows.length===0) rows=[[{content:'Keine Buchungen im Zeitraum.',colSpan:6,styles:{textColor:[136,136,136],fontStyle:'italic'}}]];
+  const einnahmen=bu.filter(b=>b.art!=='ausgabe').reduce((s,b)=>s+(Number(b.betrag)||0),0);
+  const ausgaben=bu.filter(b=>b.art==='ausgabe').reduce((s,b)=>s+(Number(b.betrag)||0),0);
+  const footRows=[[{content:'Summe Einnahmen',colSpan:5,styles:{halign:'right',fontStyle:'bold'}},{content:E(einnahmen),styles:{halign:'right',fontStyle:'bold'}}]];
+  if(ausgaben>0){ footRows.push([{content:'Summe Ausgaben',colSpan:5,styles:{halign:'right'}},{content:'- '+E(ausgaben),styles:{halign:'right'}}]);
+    footRows.push([{content:'Netto',colSpan:5,styles:{halign:'right',fontStyle:'bold'}},{content:E(einnahmen-ausgaben),styles:{halign:'right',fontStyle:'bold'}}]); }
+  doc.autoTable({ startY:y, margin:{left:ML,right:MR,bottom:MB+8},
+    head:[['Datum','Art','Objekt','Person','Zweck','Betrag']], body:rows, theme:'grid', showHead:'everyPage',
+    styles:{font:'helvetica',fontSize:8,textColor:[34,34,34],cellPadding:{top:1.8,bottom:1.8,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15,overflow:'linebreak'},
+    headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:8},
+    columnStyles:{0:{cellWidth:20},1:{cellWidth:26},2:{cellWidth:'auto'},3:{cellWidth:28},4:{cellWidth:'auto'},5:{cellWidth:26,halign:'right'}},
+    foot:footRows, footStyles:{fillColor:[240,240,240],textColor:[17,17,17],fontSize:8.5}, didDrawPage:foot });
+  doc.save('Kassenbuch_'+Y+(kasseObjFilter?'_gefiltert':'')+'.pdf');
+}
+
+/* ============================================================
    EIGENTUM & RÜCKLAGEN (WEG)  ·  Stufe 4
    Erhaltungsrücklage (§ 19 WEG) mit Bewegungsliste, MEA/Hausgeld,
    Beschluss-Sammlung, Sonderumlagen, Kontoauszug-PDF im Briefkopf.
@@ -944,7 +1163,7 @@ function ruecklagePdf(objId){
   y+=3;
   const bew=[...((o.ruecklage&&o.ruecklage.bewegungen)||[])].sort((a,b)=>String(a.datum||'').localeCompare(String(b.datum||'')));
   let run=0;
-  let rows=bew.map(x=>{ const ein=x.art!=='entnahme', b=Number(x.betrag)||0; run+=ein?b:-b; return [fmtDate(x.datum), ein?'Zuf\u00fchrung':'Entnahme', x.zweck||'', (ein?'+ ':'\u2212 ')+E(b), E(run)]; });
+  let rows=bew.map(x=>{ const ein=x.art!=='entnahme', b=Number(x.betrag)||0; run+=ein?b:-b; return [fmtDate(x.datum), ein?'Zuf\u00fchrung':'Entnahme', x.zweck||'', (ein?'+ ':'- ')+E(b), E(run)]; });
   if(rows.length===0) rows=[[{content:'Keine Bewegungen erfasst.',colSpan:5,styles:{textColor:[136,136,136],fontStyle:'italic'}}]];
   doc.autoTable({ startY:y, margin:{left:ML,right:MR,bottom:MB+8},
     head:[['Datum','Art','Zweck','Betrag','Saldo']], body:rows, theme:'grid', showHead:'everyPage',
