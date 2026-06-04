@@ -18,6 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 button{-webkit-tap-highlight-color:rgba(30,136,229,0.2);touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer}
@@ -378,7 +379,107 @@ const Store={
 let state={ objekte:[], einstellungen:{version:'1.0'} };
 let view='home', selId=null;
 const ART={ einzel:'Einzelimmobilie', mfh:'Mehrfamilienhaus', weg:'WEG-Eigentum', eigen:'Eigennutzung' };
-async function save(){ await Store.set(state); }
+async function save(){ state.updatedAt=Date.now(); await Store.set(state); cloudPushDebounced(); }
+
+/* ============================================================
+   CLOUD-SYNC (Google Drive)  ·  eigenes Drive, alle Geraete
+   Datei "hausverwaltung.json" im Ordner "TW Hausverwaltung".
+   Konflikt: der zuletzt gespeicherte Stand (updatedAt) gewinnt.
+   ============================================================ */
+const CKEY='hv:cloud:v1';
+let cloudCfg=(function(){ try{ return JSON.parse(localStorage.getItem(CKEY))||{}; }catch(e){ return {}; } })();
+let cloudToken=null, cloudTokenExp=0, cloudPushTimer=null, cloudStatus='';
+function cloudCfgSave(){ try{ localStorage.setItem(CKEY,JSON.stringify(cloudCfg)); }catch(e){} }
+function cloudSaveClientId(v){ cloudCfg.clientId=(v||'').trim(); cloudCfgSave(); }
+function setCloudStatus(s){ cloudStatus=s; if(view==='stamm') render(); }
+function cloudReady(){ return !!(window.google&&google.accounts&&google.accounts.oauth2); }
+function cloudGisWait(ms){ return new Promise(res=>{ const t0=Date.now(); (function chk(){ if(cloudReady())return res(true); if(Date.now()-t0>(ms||5000))return res(false); setTimeout(chk,150); })(); }); }
+function cloudGetToken(interactive){
+  return new Promise(async(resolve,reject)=>{
+    if(!cloudCfg.clientId) return reject(new Error('Bitte zuerst die Client-ID eintragen.'));
+    if(!(await cloudGisWait(6000))) return reject(new Error('Google-Dienst nicht geladen (Internet/Werbeblocker pr\u00fcfen).'));
+    if(cloudToken && Date.now()<cloudTokenExp-60000) return resolve(cloudToken);
+    try{
+      const tc=google.accounts.oauth2.initTokenClient({
+        client_id:cloudCfg.clientId,
+        scope:'https://www.googleapis.com/auth/drive.file',
+        callback:resp=>{ if(resp&&resp.access_token){ cloudToken=resp.access_token; cloudTokenExp=Date.now()+(Number(resp.expires_in||3600)*1000); resolve(cloudToken); } else reject(new Error('Keine Berechtigung erhalten.')); },
+        error_callback:err=>reject(new Error('OAuth-Fehler ('+((err&&err.type)||'?')+'). Ist '+location.origin+' als autorisierte JavaScript-Quelle in der Google Cloud Console eingetragen?'))
+      });
+      tc.requestAccessToken({prompt: interactive?'consent':''});
+    }catch(e){ reject(e); }
+  });
+}
+async function cloudFetch(url,opts){
+  opts=opts||{}; opts.headers=Object.assign({Authorization:'Bearer '+cloudToken},opts.headers||{});
+  let r=await fetch(url,opts);
+  if(r.status===401){ cloudToken=null; await cloudGetToken(false); opts.headers.Authorization='Bearer '+cloudToken; r=await fetch(url,opts); }
+  if(!r.ok){ const t=await r.text().catch(()=>''); throw new Error('Drive '+r.status+' '+t.slice(0,120)); }
+  return r;
+}
+async function cloudEnsureFile(){
+  if(!cloudCfg.folderId){
+    const q="name='TW Hausverwaltung' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    const d=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)&spaces=drive')).json();
+    if(d.files&&d.files[0]) cloudCfg.folderId=d.files[0].id;
+    else { const c=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'TW Hausverwaltung',mimeType:'application/vnd.google-apps.folder'})})).json(); cloudCfg.folderId=c.id; }
+    cloudCfgSave();
+  }
+  if(!cloudCfg.fileId){
+    const q="'"+cloudCfg.folderId+"' in parents and name='hausverwaltung.json' and trashed=false";
+    const d=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)&spaces=drive')).json();
+    if(d.files&&d.files[0]) cloudCfg.fileId=d.files[0].id;
+    else {
+      const meta={name:'hausverwaltung.json',mimeType:'application/json',parents:[cloudCfg.folderId]};
+      const form=new FormData();
+      form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('file',new Blob([JSON.stringify(state)],{type:'application/json'}));
+      const c=await (await cloudFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',body:form})).json();
+      cloudCfg.fileId=c.id;
+    }
+    cloudCfgSave();
+  }
+}
+async function cloudDownload(){ const r=await cloudFetch('https://www.googleapis.com/drive/v3/files/'+cloudCfg.fileId+'?alt=media'); const t=await r.text(); try{ return JSON.parse(t); }catch(e){ return null; } }
+async function cloudUpload(){ await cloudFetch('https://www.googleapis.com/upload/drive/v3/files/'+cloudCfg.fileId+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}); }
+async function cloudPull(){
+  const remote=await cloudDownload();
+  if(remote&&remote.objekte){
+    const rT=Number(remote.updatedAt||0), lT=Number(state.updatedAt||0);
+    if(rT>lT){ state=remote; await Store.set(state); render(); }
+    else if(lT>rT){ await cloudUpload(); }
+  } else { await cloudUpload(); }
+}
+async function cloudConnect(interactive){
+  try{
+    setCloudStatus('Verbinde\u2026');
+    await cloudGetToken(interactive);
+    await cloudEnsureFile();
+    await cloudPull();
+    cloudCfg.connected=true; cloudCfg.lastSync=Date.now(); cloudCfgSave();
+    setCloudStatus('Synchronisiert.');
+    if(view==='stamm') render();
+  }catch(e){ setCloudStatus('Fehler: '+e.message); if(interactive) alert(e.message); }
+}
+function cloudPushDebounced(){
+  if(!cloudCfg.connected||!cloudCfg.clientId) return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer=setTimeout(async()=>{ try{ await cloudGetToken(false); await cloudEnsureFile(); await cloudUpload(); cloudCfg.lastSync=Date.now(); cloudCfgSave(); if(view==='stamm')render(); }catch(e){ setCloudStatus('Sync-Fehler: '+e.message); } },1500);
+}
+async function cloudSyncNow(){ await cloudConnect(false); }
+function cloudDisconnect(){ cloudCfg.connected=false; cloudToken=null; cloudCfgSave(); setCloudStatus('Getrennt.'); render(); }
+function cloudCardHtml(){
+  const conn=!!cloudCfg.connected;
+  const last=cloudCfg.lastSync?new Date(cloudCfg.lastSync).toLocaleString('de-DE'):'\u2013';
+  return '<div class="card reveal d1"><h3>Cloud-Sync (Google Drive)</h3>'
+   +'<p class="hint" style="margin-bottom:12px">Daten in Ihrem eigenen Google Drive \u2013 automatisch auf PC, Tablet und Handy. Es gilt immer der zuletzt gespeicherte Stand.</p>'
+   +'<div class="field"><label>Google Client-ID (Schl\u00fcssel)</label><input id="cloudCid" value="'+esc(cloudCfg.clientId||'')+'" placeholder="\u2026apps.googleusercontent.com" oninput="cloudSaveClientId(this.value)"></div>'
+   +'<div class="nk-result" style="border-color:'+(conn?'var(--success)':'var(--border-color)')+'"><div><div class="lbl">Status</div><div style="font-family:Oswald,sans-serif;font-weight:600;color:'+(conn?'var(--success)':'var(--text-light)')+'">'+(conn?'Verbunden':'Nicht verbunden')+'</div>'+(cloudStatus?'<div class="sub">'+esc(cloudStatus)+'</div>':'')+'</div><div style="text-align:right"><div class="lbl">Letzte Sync</div><div class="sub">'+esc(last)+'</div></div></div>'
+   +'<div style="display:flex;flex-direction:column;gap:10px">'
+   +(conn?'<button class="btn btn-blue" onclick="cloudSyncNow()">Jetzt synchronisieren</button><button class="btn btn-ghost" onclick="cloudDisconnect()">Verbindung trennen</button>':'<button class="btn btn-blue" onclick="cloudConnect(true)">Mit Google verbinden</button>')
+   +'</div>'
+   +'<p class="hint" style="margin-top:12px">Einmalige Einrichtung: in der Google Cloud Console eine OAuth-Client-ID (Typ Web) anlegen und als <b>autorisierte JavaScript-Quelle</b> diese Adresse eintragen:<br><code style="color:var(--accent-blue);word-break:break-all">'+esc(location.origin)+'</code></p></div>';
+}
 async function load(){ const d=await Store.get(); if(d&&d.objekte) state=d; }
 
 /* ---------- Icons (weiße Stroke-SVGs im Master-Stil) ---------- */
@@ -609,6 +710,7 @@ function renderStamm(){
     +row('Steuernummer','18/191/51218')
     +'</div><p class="hint" style="margin-top:12px">Diese Daten bilden den Briefkopf aller PDF-Ausgaben.</p>'
     +'<button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="briefkopfDemoPdf()">Briefkopf-Vorschau (PDF)</button></div>'
+    +cloudCardHtml()
     +'<div class="card reveal d1"><h3>Datensicherung</h3>'
     +'<p class="hint" style="margin-bottom:14px">Der Browserspeicher kann gel\u00f6scht werden. Sichern Sie Ihre Daten regelm\u00e4\u00dfig als Datei und spielen Sie sie bei Bedarf zur\u00fcck.</p>'
     +'<div style="display:flex;flex-direction:column;gap:10px">'
@@ -1726,7 +1828,7 @@ function closeModal(){ document.getElementById('overlay').classList.remove('open
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 
 /* ---------- Start ---------- */
-(async()=>{ await load(); render(); })();
+(async()=>{ await load(); render(); if(cloudCfg.clientId&&cloudCfg.connected){ try{ await cloudConnect(false); }catch(e){} } })();
 </script>
 </body>
 </html>
