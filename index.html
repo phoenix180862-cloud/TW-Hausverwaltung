@@ -183,6 +183,23 @@ body::before{
   .dok-row{border-color:#ddd!important;break-inside:avoid}
 }
 
+/* Recht & Formulare */
+.recht-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.recht-tabs button{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:6px 11px;border-radius:999px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-light);cursor:pointer}
+.recht-tabs button.on{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff}
+.recht-item{border:1px solid var(--border-color);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:8px;background:var(--bg-secondary)}
+.recht-item .ref{font-family:'Oswald',sans-serif;font-weight:700;color:var(--accent-blue);font-size:13px;letter-spacing:.3px}
+.recht-item .ti{font-weight:600;color:var(--text-white);margin:1px 0 5px}
+.recht-item p{font-size:13px;color:var(--text-light);line-height:1.5;margin:0}
+.recht-item .tags{margin-top:7px;font-size:11px;color:var(--text-muted)}
+.fb-grp{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin:16px 0 8px}
+.fb-card{width:100%;text-align:left;border:1px solid var(--border-color);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:8px;background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-family:inherit;display:block;transition:all .16s ease}
+.fb-card:hover{background:var(--bg-tertiary);border-color:var(--accent-blue)}
+.fb-card .ti{font-weight:600;color:var(--text-white)}
+.fb-card .be{font-size:12px;color:var(--text-muted);margin-top:2px}
+.fb-card .risk{display:inline-block;font-size:10px;color:var(--accent-red-light);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+@media print{.recht-item,.fb-card{background:#fff!important;border:1px solid #ccc!important;color:#111!important}.recht-item p,.fb-card .be{color:#333!important}.recht-item .ti,.fb-card .ti{color:#111!important}}
+
 /* Hinweis-Box */
 .notice{padding:14px 16px;border-radius:var(--radius-md);background:rgba(232,126,34,0.08);border:1px solid rgba(232,126,34,0.3);margin-bottom:14px}
 .notice b{display:block;color:var(--accent-orange-light);font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -358,6 +375,7 @@ const I={
   stamm:'<circle cx="16" cy="16" r="4" stroke="white" stroke-width="2" fill="none"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3" stroke="white" stroke-width="1.6"/>',
   kasse:'<rect x="3" y="8" width="26" height="16" rx="2" stroke="white" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="3.6" stroke="white" stroke-width="2" fill="none"/><line x1="7" y1="12" x2="7" y2="20" stroke="white" stroke-width="1.6"/><line x1="25" y1="12" x2="25" y2="20" stroke="white" stroke-width="1.6"/>',
   brief:'<rect x="4" y="7" width="24" height="18" rx="2" stroke="white" stroke-width="2" fill="none"/><path d="M5 9l11 8 11-8" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/>',
+  formular:'<path d="M7 3h14l4 4v22H7z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><path d="M21 3v4h4" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><line x1="11" y1="14" x2="21" y2="14" stroke="white" stroke-width="1.5"/><line x1="11" y1="19" x2="21" y2="19" stroke="white" stroke-width="1.5"/><line x1="11" y1="24" x2="17" y2="24" stroke="white" stroke-width="1.5"/>',
   plus:'<path d="M16 6v20M6 16h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
 };
 const svgWrap=p=>'<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">'+p+'</svg>';
@@ -399,6 +417,8 @@ function render(){
   else if(view==='nk') el.innerHTML=renderNk();
   else if(view==='weg') el.innerHTML=renderWeg();
   else if(view==='kasse') el.innerHTML=renderKasse();
+  else if(view==='recht') el.innerHTML=renderRecht();
+  else if(view==='formulare') el.innerHTML=renderFormulare();
   else el.innerHTML=renderSoon(view);
   const fab=document.getElementById('printFab'); if(fab) fab.style.display=(view==='home')?'none':'flex';
 }
@@ -438,7 +458,8 @@ function renderHome(){
     +navTile(I.kasse,'Kasse','Einnahmen, Forderungen, Mahnungen','kasse',true)
     +navTile(I.nk,'Nebenkostenabrechnung','Abrechnung nach Ihrer Vorlage','nk',true)
     +navTile(I.weg,'Eigentum & R\u00fccklagen','WEG, Erhaltungsr\u00fccklage','weg',true)
-    +navTile(I.recht,'Rechtsgrundlagen','BGB, BetrKV, HeizkostenV, WEG','recht',false)
+    +navTile(I.formular,'Formular-Bibliothek','Vorlagen mit Auto-Ausf\u00fcllung','formulare',true)
+    +navTile(I.recht,'Rechtsgrundlagen','BGB, BetrKV, HeizkostenV, WEG','recht',true)
     +navTile(I.stamm,'Stammdaten & Sicherung','Verwalterdaten, Daten sichern','stamm',true)
     +'</div>';
 
@@ -837,6 +858,234 @@ function nkPdf(){
   doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(136,136,136);
   doc.text(doc.splitTextToSize('Informations- und Abrechnungswerkzeug \u2013 keine Steuer- oder Rechtsberatung. Angaben ohne Gewaehr; massgeblich sind die geprueften Belege.',rx-ML),ML,y+2);
   doc.save('Nebenkostenabrechnung_'+nkJahr+'_'+String(M.name||(e?e.bezeichnung:'Mieter')).replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/ +/g,'_')+'.pdf');
+}
+
+/* ============================================================
+   RECHTSGRUNDLAGEN  ·  Stufe 5
+   Eigene, neutrale Kurzfassungen (Gesetzestexte sind gemeinfrei,
+   § 5 UrhG). Keine Fremdtexte. Orientierung, keine Rechtsberatung.
+   ============================================================ */
+const RECHT_KAT={alle:'Alle',miet:'Mietverh\u00e4ltnis',bk:'Betriebskosten',kaution:'Kaution',erhoehung:'Mieterh\u00f6hung',kuendigung:'K\u00fcndigung',weg:'WEG'};
+const RECHT=[
+ {kat:'miet',ref:'\u00a7\u00a7 535\u2013548 BGB',titel:'Pflichten aus dem Mietvertrag',text:'Der Vermieter \u00fcberl\u00e4sst die Wohnung in gebrauchstauglichem Zustand und h\u00e4lt sie instand; der Mieter zahlt die vereinbarte Miete und geht sorgsam mit der Wohnung um. Diese Paragraphen regeln u. a. Gebrauchs\u00fcberlassung, Erhaltungslast, Mietzahlung und Obhutspflichten.',tags:'Vertrag, Pflichten, Instandhaltung'},
+ {kat:'miet',ref:'\u00a7\u00a7 536, 536a BGB',titel:'Mietminderung bei M\u00e4ngeln',text:'Ist die Gebrauchstauglichkeit durch einen Mangel gemindert, kann der Mieter die Miete angemessen mindern; bei verschuldeten oder versp\u00e4tet beseitigten M\u00e4ngeln kommen Schadensersatz und Aufwendungsersatz in Betracht. Eine vorherige Mangelanzeige ist regelm\u00e4\u00dfig erforderlich.',tags:'Mangel, Minderung, Schadensersatz'},
+ {kat:'miet',ref:'\u00a7 538 BGB',titel:'Vertragsgem\u00e4\u00dfe Abnutzung',text:'Ver\u00e4nderungen oder Verschlechterungen durch den vertragsgem\u00e4\u00dfen Gebrauch hat der Mieter nicht zu vertreten. Normale Abnutzung ist mit der Miete abgegolten und rechtfertigt keine Schadensforderung.',tags:'Abnutzung, Sch\u00f6nheitsreparaturen'},
+ {kat:'miet',ref:'\u00a7 548 BGB',titel:'Kurze Verj\u00e4hrung nach R\u00fcckgabe',text:'Ersatzanspr\u00fcche des Vermieters wegen Ver\u00e4nderung oder Verschlechterung der Wohnung verj\u00e4hren in sechs Monaten ab R\u00fcckgabe der Mietsache. Die R\u00fcckgabe (Schl\u00fcssel\u00fcbergabe) setzt die Frist in Gang \u2013 zeitnahe Abrechnung ist daher wichtig.',tags:'Verj\u00e4hrung, R\u00fcckgabe, Auszug'},
+ {kat:'kaution',ref:'\u00a7 551 BGB',titel:'Mietsicherheit (Kaution)',text:'Die Barkaution ist auf h\u00f6chstens drei Nettokaltmieten begrenzt und darf in drei Monatsraten gezahlt werden. Der Vermieter legt sie getrennt von seinem Verm\u00f6gen insolvenzfest und verzinslich an; die Zinsen stehen dem Mieter zu.',tags:'Kaution, Anlage, Verzinsung'},
+ {kat:'bk',ref:'\u00a7 556 BGB',titel:'Betriebskosten & Abrechnungsfrist',text:'Betriebskosten d\u00fcrfen umgelegt werden, wenn dies vereinbart ist. \u00dcber Vorauszahlungen ist j\u00e4hrlich abzurechnen; die Abrechnung muss dem Mieter sp\u00e4testens zw\u00f6lf Monate nach Ende des Abrechnungszeitraums zugehen, sonst sind Nachforderungen grunds\u00e4tzlich ausgeschlossen.',tags:'Betriebskosten, Frist, Abrechnung'},
+ {kat:'bk',ref:'\u00a7 556a BGB',titel:'Verteilerschl\u00fcssel',text:'Ohne abweichende Vereinbarung werden Betriebskosten nach Wohnfl\u00e4che verteilt; verbrauchsabh\u00e4ngige Kosten d\u00fcrfen nach erfasstem Verbrauch umgelegt werden. Eine Umstellung auf einen verbrauchsabh\u00e4ngigen Ma\u00dfstab ist unter Voraussetzungen zul\u00e4ssig.',tags:'Verteilung, Wohnfl\u00e4che, Verbrauch'},
+ {kat:'bk',ref:'BetrKV',titel:'Betriebskostenverordnung',text:'Die Betriebskostenverordnung listet die umlagef\u00e4higen laufenden Kosten auf (u. a. Grundsteuer, Wasser/Abwasser, Heizung, Aufzug, Stra\u00dfenreinigung/M\u00fcll, Hausreinigung, Gartenpflege, Beleuchtung, Versicherungen, Hauswart, Gemeinschaftsantenne). Verwaltungs- und Instandhaltungskosten geh\u00f6ren nicht dazu.',tags:'umlagef\u00e4hig, Katalog'},
+ {kat:'bk',ref:'HeizkostenV',titel:'Heizkostenverordnung',text:'Heiz- und Warmwasserkosten sind \u00fcberwiegend verbrauchsabh\u00e4ngig abzurechnen: 50\u201370 % nach erfasstem Verbrauch, der Rest nach Fl\u00e4che (Grundkosten). Fehlt die verbrauchsabh\u00e4ngige Abrechnung, steht dem Mieter ein K\u00fcrzungsrecht zu.',tags:'Heizung, Warmwasser, 70/30'},
+ {kat:'erhoehung',ref:'\u00a7 558 BGB',titel:'Erh\u00f6hung bis zur Vergleichsmiete',text:'Der Vermieter kann die Zustimmung zu einer Erh\u00f6hung bis zur orts\u00fcblichen Vergleichsmiete verlangen, fr\u00fchestens 15 Monate nach Einzug bzw. letzter Erh\u00f6hung. Es gilt eine Kappungsgrenze (regional 15\u201320 % in drei Jahren); das Verlangen ist zu begr\u00fcnden (z. B. Mietspiegel).',tags:'Vergleichsmiete, Kappungsgrenze, Mietspiegel'},
+ {kat:'erhoehung',ref:'\u00a7 559 BGB',titel:'Modernisierungsumlage',text:'Nach einer Modernisierung darf ein Teil der Kosten auf die Jahresmiete umgelegt werden (gesetzlich begrenzter Prozentsatz). Die Ma\u00dfnahme ist vorab anzuk\u00fcndigen (\u00a7 555c); H\u00e4rtef\u00e4lle sind zu ber\u00fccksichtigen.',tags:'Modernisierung, Umlage'},
+ {kat:'kuendigung',ref:'\u00a7 573 BGB',titel:'Ordentliche K\u00fcndigung des Vermieters',text:'Der Vermieter kann nur bei berechtigtem Interesse k\u00fcndigen \u2013 etwa Eigenbedarf, erhebliche Vertragsverletzung des Mieters oder angemessene wirtschaftliche Verwertung. Die Gr\u00fcnde sind im K\u00fcndigungsschreiben anzugeben.',tags:'Eigenbedarf, berechtigtes Interesse'},
+ {kat:'kuendigung',ref:'\u00a7 573c BGB',titel:'K\u00fcndigungsfristen',text:'Die Frist betr\u00e4gt grunds\u00e4tzlich drei Monate; f\u00fcr den Vermieter verl\u00e4ngert sie sich nach f\u00fcnf bzw. acht Jahren Mietdauer auf sechs bzw. neun Monate. Die K\u00fcndigung muss sp\u00e4testens am dritten Werktag eines Monats zugehen.',tags:'Fristen, Zugang'},
+ {kat:'kuendigung',ref:'\u00a7 574 BGB',titel:'Widerspruch des Mieters (H\u00e4rte)',text:'Der Mieter kann einer K\u00fcndigung widersprechen und Fortsetzung verlangen, wenn die Beendigung eine nicht zu rechtfertigende H\u00e4rte bedeuten w\u00fcrde. Auf das Widerspruchsrecht ist im K\u00fcndigungsschreiben hinzuweisen.',tags:'Widerspruch, H\u00e4rtefall, Sozialklausel'},
+ {kat:'weg',ref:'\u00a7 19 WEG',titel:'Verwaltung & Erhaltungsr\u00fccklage',text:'Die Eigent\u00fcmer regeln die ordnungsm\u00e4\u00dfige Verwaltung; dazu geh\u00f6rt die Ansammlung einer angemessenen Erhaltungsr\u00fccklage. Sie dient k\u00fcnftigen Instandhaltungs- und Instandsetzungsma\u00dfnahmen am Gemeinschaftseigentum.',tags:'R\u00fccklage, Verwaltung, Gemeinschaft'},
+ {kat:'weg',ref:'\u00a7 28 WEG',titel:'Wirtschaftsplan & Jahresabrechnung',text:'Die Verwaltung stellt einen Wirtschaftsplan auf; die Eigent\u00fcmer beschlie\u00dfen \u00fcber die Vorsch\u00fcsse (Hausgeld). Nach Ablauf des Jahres wird abgerechnet und \u00fcber die Anpassung (Nachschuss/Guthaben) beschlossen.',tags:'Wirtschaftsplan, Hausgeld, Jahresabrechnung'}
+];
+let rechtKat='alle', rechtQuery='';
+function rechtTab(k){ rechtKat=k; render(); }
+function rechtSearch(v){ rechtQuery=(v||'').toLowerCase(); const el=document.getElementById('rechtList'); if(el) el.innerHTML=rechtListHtml(); }
+function rechtListHtml(){
+  const items=RECHT.filter(r=>(rechtKat==='alle'||r.kat===rechtKat)&&(!rechtQuery||(r.ref+' '+r.titel+' '+r.text+' '+r.tags).toLowerCase().includes(rechtQuery)));
+  if(!items.length) return '<div class="leer-hint">Kein Eintrag gefunden.</div>';
+  return items.map(r=>'<div class="recht-item"><div class="ref">'+r.ref+'</div><div class="ti">'+esc(r.titel)+'</div><p>'+esc(r.text)+'</p><div class="tags">'+esc(r.tags)+'</div></div>').join('');
+}
+function renderRecht(){
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const tabs='<div class="recht-tabs reveal">'+Object.keys(RECHT_KAT).map(k=>'<button class="'+(rechtKat===k?'on':'')+'" onclick="rechtTab(\''+k+'\')">'+RECHT_KAT[k]+'</button>').join('')+'</div>';
+  const such='<div class="card reveal"><div class="field" style="margin:0"><label>Suche</label><input type="text" placeholder="Stichwort, z. B. Kaution, Frist, \u00a7 558" oninput="rechtSearch(this.value)" value="'+esc(rechtQuery)+'"></div></div>';
+  const disc='<div class="disc reveal">Eigene, neutrale Kurzfassungen der genannten Vorschriften \u2013 Orientierungshilfe, keine Rechtsberatung. F\u00fcr gepr\u00fcfte Muster und Einzelf\u00e4lle: Haus & Grund (Vermieterseite) bzw. Deutscher Mieterbund (Mieterseite) oder anwaltliche Beratung.</div>';
+  return kopf('Rechtsgrundlagen','Bibliothek',0.55)+such+tabs+'<div id="rechtList">'+rechtListHtml()+'</div>'+disc+back;
+}
+
+/* ============================================================
+   FORMULAR-BIBLIOTHEK  ·  Stufe 5
+   Vorgefertigte Vorlagen; Auto-Ausfuellung aus Objekt/Einheit/
+   Mietverhaeltnis; Ausgabe als PDF im Vermieter-Briefkopf.
+   Vermieter = Privatperson Thomas Willwacher.
+   ============================================================ */
+const FB_SIG='\n\nMit freundlichen Gr\u00fc\u00dfen\n\n\nThomas Willwacher\n(Vermieter)';
+const FB_ABS='Thomas Willwacher, Flurweg 14a, 56472 Nisterau';
+function fbEck(ctx){ const o=ctx.o,e=ctx.e,mv=ctx.mv,D=ctx.D,eur=ctx.eur; const rows=[
+  ['Vermieter',FB_ABS],['Mieter',ctx.emp.name||'\u2014'],['Objekt',o.bezeichnung||'\u2014'],['Wohnung',e?e.bezeichnung:'\u2014']];
+  if(e&&e.wohnflaeche) rows.push(['Wohnfl\u00e4che',e.wohnflaeche+' m2']);
+  if(mv){ if(mv.einzug)rows.push(['Mietbeginn',D(mv.einzug)]); if(mv.kaltmiete)rows.push(['Kaltmiete',eur(mv.kaltmiete)]); if(mv.nkVoraus)rows.push(['NK-Vorauszahlung',eur(mv.nkVoraus)]); if(mv.kaution)rows.push(['Kaution',eur(mv.kaution)]); }
+  return rows;
+}
+const FORMBLATT=[
+ {id:'mietvertrag_eck',grp:'A. Vermietung / Vertragsbeginn',titel:'Mietvertrag \u2013 Eckdatenblatt',be:'Eckdaten zum Wohnraummietvertrag (Vollvertrag \u00fcber Verbandsmuster).',risiko:true,empf:false,felder:[],
+   build:ctx=>({typ:'protokoll',betreff:'Wohnraummietvertrag \u2013 Eckdaten',sections:[
+     {t:'table',rows:fbEck(ctx)},
+     {t:'text',text:'Dieses Blatt fasst die Eckdaten zusammen. Der vollst\u00e4ndige Mietvertrag ist vorrangig auf Basis eines gepr\u00fcften Verbandsmusters (Haus & Grund) zu schlie\u00dfen.'},
+     {t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'} ]})},
+ {id:'selbstauskunft',grp:'A. Vermietung / Vertragsbeginn',titel:'Selbstauskunft Mietinteressent',be:'Leerformular zur Bonit\u00e4t/Daten vor Vertragsschluss.',empf:false,felder:[],
+   build:ctx=>({typ:'protokoll',betreff:'Selbstauskunft Mietinteressent',sections:[
+     {t:'text',text:'Angaben des Mietinteressenten (freiwillig, zur Pr\u00fcfung vor Vertragsschluss):'},
+     {t:'table',rows:[['Name, Vorname','________________________'],['Geburtsdatum','________________________'],['Aktuelle Anschrift','________________________'],['Beruf / Arbeitgeber','________________________'],['Monatl. Nettoeinkommen','________________________'],['Anzahl einziehender Personen','________________________'],['Bisheriger Vermieter','________________________'],['Mietr\u00fcckst\u00e4nde / R\u00e4umungsklage','ja \u2610   nein \u2610'],['Insolvenzverfahren','ja \u2610   nein \u2610']]},
+     {t:'text',text:'Die Angaben werden ausschlie\u00dflich zur Auswahlentscheidung verwendet und nach Zweckerf\u00fcllung gel\u00f6scht.'},
+     {t:'sign',left:'Ort, Datum',right:'Unterschrift Interessent'} ]})},
+ {id:'sepa',grp:'A. Vermietung / Vertragsbeginn',titel:'SEPA-Lastschriftmandat (Miete)',be:'Einzugserm\u00e4chtigung f\u00fcr die Mietzahlung.',empf:false,
+   felder:[{key:'iban',label:'IBAN des Mieters',type:'text',ph:'DE..'},{key:'glaeubiger',label:'Gl\u00e4ubiger-ID Vermieter',type:'text',ph:'falls vorhanden'},{key:'betrag',label:'Monatlicher Mietbetrag (\u20ac)',type:'num'}],
+   build:ctx=>{const f=ctx.f,mv=ctx.mv,eur=ctx.eur; const betr=f.betrag||(mv?((Number(mv.kaltmiete)||0)+(Number(mv.nkVoraus)||0)):''); return {typ:'protokoll',betreff:'SEPA-Lastschriftmandat',sections:[
+     {t:'table',rows:[['Zahlungsempf\u00e4nger',FB_ABS],['Gl\u00e4ubiger-Identifikationsnr.',f.glaeubiger||'________________________'],['Mandatsreferenz','________________________'],['Zahlungspflichtiger (Mieter)',ctx.emp.name||'\u2014'],['Objekt / Wohnung',ctx.o.bezeichnung+(ctx.e?', '+ctx.e.bezeichnung:'')],['IBAN',f.iban||'________________________'],['Monatlicher Betrag',betr?eur(betr):'________________________']]},
+     {t:'text',text:'Ich erm\u00e4chtige den Zahlungsempf\u00e4nger, Zahlungen von meinem Konto mittels Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die Lastschriften einzul\u00f6sen. Ich kann innerhalb von acht Wochen ab Belastung die Erstattung verlangen.'},
+     {t:'sign',left:'Ort, Datum',right:'Unterschrift Kontoinhaber'} ]};}},
+ {id:'hausordnung',grp:'A. Vermietung / Vertragsbeginn',titel:'Hausordnung (Anlage)',be:'Anlage zum Mietvertrag.',empf:false,
+   felder:[{key:'regeln',label:'Erg\u00e4nzende/abweichende Regeln',type:'area',ph:'optional'}],
+   build:ctx=>({typ:'protokoll',betreff:'Hausordnung \u2013 '+ctx.o.bezeichnung,sections:[
+     {t:'text',text:'Zur R\u00fccksichtnahme im Haus gelten folgende Regeln:'},
+     {t:'table',rows:[['Ruhezeiten','22:00\u201306:00 Uhr sowie mittags; Zimmerlautst\u00e4rke einhalten.'],['Treppenhaus/Flure','freihalten (Fluchtwege), keine Lagerung; Reinigung nach Plan.'],['M\u00fcll','Trennung nach Vorgabe; Tonnen nur am Abfuhrtag bereitstellen.'],['Garten/Au\u00dfen','pflegliche Nutzung; Gemeinschaftsfl\u00e4chen sauber halten.'],['Sicherheit','Haust\u00fcr abends schlie\u00dfen; keine Gegenst\u00e4nde in Fluchtwegen.']]},
+     {t:'text',text:(ctx.f.regeln||'')+'\n\nDie Hausordnung ist Bestandteil des Mietvertrags.'},
+     {t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'} ]})},
+ {id:'uebergabe',grp:'B. \u00dcbergabe / Einzug',titel:'Wohnungs\u00fcbergabe-/Abnahmeprotokoll',be:'Beweissicherung Zustand \u2013 Einzug oder Auszug.',empf:false,
+   felder:[{key:'art',label:'Vorgang',type:'select',options:['Einzug','Auszug']},{key:'datum',label:'Datum',type:'date'},{key:'strom',label:'Z\u00e4hlerstand Strom',type:'text'},{key:'gas',label:'Z\u00e4hlerstand Gas',type:'text'},{key:'wasser',label:'Z\u00e4hlerstand Wasser',type:'text'},{key:'heizung',label:'Z\u00e4hlerstand Heizung',type:'text'},{key:'schluessel',label:'Schl\u00fcssel (Art + Anzahl)',type:'text'},{key:'zustand',label:'Zustand / M\u00e4ngel (raumweise)',type:'area'}],
+   build:ctx=>{const f=ctx.f,D=ctx.D; const art=f.art||'Einzug'; const info=[['Vorgang',art],['Datum',f.datum?D(f.datum):D(new Date().toISOString().slice(0,10))],['Objekt',ctx.o.bezeichnung],['Wohnung',ctx.e?ctx.e.bezeichnung:'\u2014'],['Mieter',ctx.emp.name||'\u2014']]; if(ctx.e&&ctx.e.wohnflaeche)info.push(['Wohnfl\u00e4che',ctx.e.wohnflaeche+' m2']);
+     return {typ:'protokoll',betreff:'Wohnungs'+(art==='Auszug'?'abnahme':'\u00fcbergabe')+'protokoll \u2013 '+art,sections:[
+     {t:'table',rows:info},
+     {t:'grid',head:['Z\u00e4hler','Stand'],rows:[['Strom',f.strom||''],['Gas',f.gas||''],['Wasser',f.wasser||''],['Heizung',f.heizung||'']],cols:{0:{cellWidth:60},1:{cellWidth:'auto'}}},
+     {t:'table',rows:[['\u00dcbergebene Schl\u00fcssel',f.schluessel||'________________________']]},
+     {t:'head',text:'Zustand / M\u00e4ngel'},{t:'text',text:f.zustand||'\u2014'},
+     {t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'} ]};}},
+ {id:'schluessel',grp:'B. \u00dcbergabe / Einzug',titel:'Schl\u00fcsselquittung',be:'\u00dcbergabe oder R\u00fcckgabe von Schl\u00fcsseln.',empf:false,
+   felder:[{key:'art',label:'Vorgang',type:'select',options:['\u00dcbergabe','R\u00fcckgabe']},{key:'datum',label:'Datum',type:'date'},{key:'liste',label:'Schl\u00fcssel (Art + Anzahl)',type:'area',ph:'z. B. Haust\u00fcr 2, Wohnung 2, Briefkasten 1'}],
+   build:ctx=>{const f=ctx.f,D=ctx.D; const art=f.art||'\u00dcbergabe'; const sec=[
+     {t:'table',rows:[['Vorgang',art==='R\u00fcckgabe'?'Schl\u00fcsselr\u00fcckgabe':'Schl\u00fcssel\u00fcbergabe'],['Datum',f.datum?D(f.datum):D(new Date().toISOString().slice(0,10))],['Objekt',ctx.o.bezeichnung],['Wohnung',ctx.e?ctx.e.bezeichnung:'\u2014'],['Mieter',ctx.emp.name||'\u2014']]},
+     {t:'head',text:'Schl\u00fcssel'},{t:'text',text:f.liste||'\u2014'}];
+     if(art==='R\u00fcckgabe') sec.push({t:'text',text:'Hinweis: Mit der R\u00fcckgabe beginnt die sechsmonatige Verj\u00e4hrungsfrist f\u00fcr Ersatzanspr\u00fcche (\u00a7 548 BGB).'});
+     sec.push({t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'});
+     return {typ:'protokoll',betreff:'Schl\u00fcssel'+(art==='R\u00fcckgabe'?'r\u00fcckgabe':'\u00fcbergabe')+'-Quittung',sections:sec};}},
+ {id:'wohnungsgeber',grp:'B. \u00dcbergabe / Einzug',titel:'Wohnungsgeberbest\u00e4tigung (\u00a7 19 BMG)',be:'Pflicht-Nachweis f\u00fcr die Anmeldung des Mieters.',empf:false,
+   felder:[{key:'einzug',label:'Einzugsdatum',type:'date'}],
+   build:ctx=>{const f=ctx.f,D=ctx.D,mv=ctx.mv; const ez=f.einzug||(mv&&mv.einzug)||''; return {typ:'protokoll',betreff:'Wohnungsgeberbest\u00e4tigung gem\u00e4\u00df \u00a7 19 BMG',sections:[
+     {t:'table',rows:[['Wohnungsgeber/Vermieter',FB_ABS],['Anschrift der Wohnung',(ctx.o.bezeichnung||'')+(ctx.emp.adresse?', '+ctx.emp.adresse:'')+(ctx.e?', '+ctx.e.bezeichnung:'')],['Einziehende Person (Mieter)',ctx.emp.name||'\u2014'],['Einzugsdatum',ez?D(ez):'________________________'],['Art','Einzug']]},
+     {t:'text',text:'Hiermit best\u00e4tige ich als Wohnungsgeber den Einzug der genannten Person gem\u00e4\u00df \u00a7 19 Bundesmeldegesetz.'},
+     {t:'sign',left:'Ort, Datum',right:'Unterschrift Wohnungsgeber'} ]};}},
+ {id:'kaution_v',grp:'C. Laufendes Mietverh\u00e4ltnis',titel:'Kautionsvereinbarung / -quittung',be:'Kautionsh\u00f6he, Anlageart und Quittung.',empf:false,
+   felder:[{key:'betrag',label:'Kaution (\u20ac)',type:'num'},{key:'anlage',label:'Anlageform',type:'text',ph:'z. B. Mietkautionssparbuch'}],
+   build:ctx=>{const f=ctx.f,mv=ctx.mv,eur=ctx.eur; const k=f.betrag||(mv&&mv.kaution)||''; return {typ:'protokoll',betreff:'Kautionsvereinbarung / -quittung',sections:[
+     {t:'table',rows:[['Mieter',ctx.emp.name||'\u2014'],['Objekt / Wohnung',ctx.o.bezeichnung+(ctx.e?', '+ctx.e.bezeichnung:'')],['Kaution',k?eur(k):'________________________'],['Anlageform',f.anlage||'________________________']]},
+     {t:'text',text:'Die Kaution betr\u00e4gt h\u00f6chstens drei Nettokaltmieten (\u00a7 551 BGB) und wird getrennt vom Verm\u00f6gen des Vermieters insolvenzfest und verzinslich angelegt; die Zinsen stehen dem Mieter zu. Die R\u00fcckzahlung erfolgt nach ordnungsgem\u00e4\u00dfer R\u00fcckgabe abz\u00fcglich berechtigter Forderungen.'},
+     {t:'table',rows:[['Betrag erhalten am','________________________']]},
+     {t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'} ]};}},
+ {id:'mieterhoehung',grp:'C. Laufendes Mietverh\u00e4ltnis',titel:'Mieterh\u00f6hungsverlangen (\u00a7 558)',be:'Erh\u00f6hung bis zur orts\u00fcblichen Vergleichsmiete.',risiko:true,empf:true,
+   felder:[{key:'neu',label:'Neue Kaltmiete (\u20ac)',type:'num'},{key:'ab',label:'Wirksam ab',type:'date'},{key:'begr',label:'Begr\u00fcndung (z. B. Mietspiegel)',type:'area'}],
+   build:ctx=>{const f=ctx.f,mv=ctx.mv,eur=ctx.eur,D=ctx.D; const alt=mv&&mv.kaltmiete?eur(mv.kaltmiete):'(bisherige Kaltmiete)'; const neu=f.neu?eur(f.neu):'(neue Kaltmiete)';
+     const t='Sehr geehrte/r '+(ctx.emp.name||'Mieter/in')+',\n\nf\u00fcr die von Ihnen gemietete Wohnung '+(ctx.e?ctx.e.bezeichnung:'')+' im Objekt '+ctx.o.bezeichnung+' bitte ich Sie um Zustimmung zu einer Anpassung der Kaltmiete an die orts\u00fcbliche Vergleichsmiete gem\u00e4\u00df \u00a7 558 BGB.\n\nBisherige Kaltmiete: '+alt+'\nNeue Kaltmiete: '+neu+(f.ab?'\nWirksam ab: '+D(f.ab):'')+'\n\nBegr\u00fcndung: '+(f.begr||'(Mietspiegel/Vergleichsmiete)')+'\n\nIch bitte um Ihre Zustimmung bis zum Ablauf des zweiten auf den Zugang folgenden Monats. Eine Kappungsgrenze und die gesetzlichen Voraussetzungen sind beachtet.'+FB_SIG;
+     return {typ:'brief',betreff:'Mieterh\u00f6hungsverlangen gem\u00e4\u00df \u00a7 558 BGB',text:t};}},
+ {id:'maengel',grp:'C. Laufendes Mietverh\u00e4ltnis',titel:'M\u00e4ngelprotokoll',be:'Mangel dokumentieren, Frist setzen.',empf:false,
+   felder:[{key:'datum',label:'Festgestellt am',type:'date'},{key:'mangel',label:'Mangelbeschreibung',type:'area'},{key:'frist',label:'Frist zur Behebung',type:'date'}],
+   build:ctx=>{const f=ctx.f,D=ctx.D; return {typ:'protokoll',betreff:'M\u00e4ngelprotokoll',sections:[
+     {t:'table',rows:[['Objekt / Wohnung',ctx.o.bezeichnung+(ctx.e?', '+ctx.e.bezeichnung:'')],['Mieter',ctx.emp.name||'\u2014'],['Festgestellt am',f.datum?D(f.datum):D(new Date().toISOString().slice(0,10))],['Frist zur Behebung',f.frist?D(f.frist):'________________________']]},
+     {t:'head',text:'Mangelbeschreibung'},{t:'text',text:f.mangel||'\u2014'},
+     {t:'text',text:'Fotodokumentation siehe Anlage (sofern vorhanden).'},
+     {t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'} ]};}},
+ {id:'abnahme',grp:'D. Auszug / Beendigung',titel:'Kautionsabrechnung',be:'Kaution, Abz\u00fcge und Auszahlung.',empf:true,
+   felder:[{key:'kaution',label:'Kaution (\u20ac)',type:'num'},{key:'zinsen',label:'Zinsen (\u20ac)',type:'num'},{key:'abzuege',label:'Abz\u00fcge (Beschreibung)',type:'area'},{key:'abzugBetrag',label:'Summe Abz\u00fcge (\u20ac)',type:'num'},{key:'frist',label:'Auszahlung bis',type:'date'}],
+   build:ctx=>{const f=ctx.f,mv=ctx.mv,eur=ctx.eur,D=ctx.D; const k=Number(f.kaution|| (mv&&mv.kaution)||0); const z=Number(f.zinsen||0); const ab=Number(f.abzugBetrag||0); const aus=k+z-ab;
+     const t='Sehr geehrte/r '+(ctx.emp.name||'Mieter/in')+',\n\nnach Beendigung des Mietverh\u00e4ltnisses \u00fcber die Wohnung '+(ctx.e?ctx.e.bezeichnung:'')+' im Objekt '+ctx.o.bezeichnung+' rechne ich Ihre Kaution wie folgt ab:\n\nKaution: '+eur(k)+'\nZinsen: '+eur(z)+'\nAbz\u00fcge: '+(ab?'- '+eur(ab):eur(0))+(f.abzuege?'\n  ('+f.abzuege+')':'')+'\n-------------------------\nAuszahlungsbetrag: '+eur(aus)+'\n\nDer Betrag wird bis zum '+(f.frist?D(f.frist):'(Datum)')+' auf das bekannte Konto \u00fcberwiesen.'+FB_SIG;
+     return {typ:'brief',betreff:'Kautionsabrechnung',text:t};}},
+ {id:'schluessel_rueck',grp:'D. Auszug / Beendigung',titel:'Schl\u00fcsselr\u00fcckgabe-Quittung',be:'R\u00fcckgabe best\u00e4tigen, \u00a7-548-Frist starten.',empf:false,
+   felder:[{key:'datum',label:'R\u00fcckgabedatum',type:'date'},{key:'liste',label:'Zur\u00fcckgegebene Schl\u00fcssel',type:'area'}],
+   build:ctx=>{const f=ctx.f,D=ctx.D; return {typ:'protokoll',betreff:'Schl\u00fcsselr\u00fcckgabe-Quittung',sections:[
+     {t:'table',rows:[['Objekt / Wohnung',ctx.o.bezeichnung+(ctx.e?', '+ctx.e.bezeichnung:'')],['Mieter',ctx.emp.name||'\u2014'],['R\u00fcckgabedatum',f.datum?D(f.datum):D(new Date().toISOString().slice(0,10))]]},
+     {t:'head',text:'Zur\u00fcckgegebene Schl\u00fcssel'},{t:'text',text:f.liste||'\u2014'},
+     {t:'text',text:'Mit der R\u00fcckgabe beginnt die sechsmonatige Verj\u00e4hrungsfrist f\u00fcr Ersatzanspr\u00fcche (\u00a7 548 BGB).'},
+     {t:'sign',left:'Ort, Datum / Vermieter',right:'Ort, Datum / Mieter'} ]};}},
+ {id:'kuendigung_best',grp:'D. Auszug / Beendigung',titel:'K\u00fcndigungsbest\u00e4tigung',be:'Empfang der Mieterk\u00fcndigung best\u00e4tigen.',empf:true,
+   felder:[{key:'kdatum',label:'Datum der Mieterk\u00fcndigung',type:'date'},{key:'ende',label:'Mietende',type:'date'}],
+   build:ctx=>{const f=ctx.f,D=ctx.D; const t='Sehr geehrte/r '+(ctx.emp.name||'Mieter/in')+',\n\nhiermit best\u00e4tige ich den Eingang Ihrer K\u00fcndigung'+(f.kdatum?' vom '+D(f.kdatum):'')+' f\u00fcr die Wohnung '+(ctx.e?ctx.e.bezeichnung:'')+' im Objekt '+ctx.o.bezeichnung+'.\n\nDas Mietverh\u00e4ltnis endet danach zum '+(f.ende?D(f.ende):'(Mietende)')+'. Zur Wohnungs\u00fcbergabe stimmen wir rechtzeitig einen Termin ab; bitte geben Sie zu diesem Termin s\u00e4mtliche Schl\u00fcssel zur\u00fcck.'+FB_SIG; return {typ:'brief',betreff:'Best\u00e4tigung Ihrer K\u00fcndigung',text:t};}},
+ {id:'anschreiben',grp:'Allgemein',titel:'Allgemeines Anschreiben',be:'Freier Brief im Briefkopf.',empf:true,
+   felder:[{key:'betreff',label:'Betreff',type:'text'},{key:'text',label:'Text',type:'area'}],
+   build:ctx=>({typ:'brief',betreff:ctx.f.betreff||'Mitteilung',text:'Sehr geehrte/r '+(ctx.emp.name||'Mieter/in')+',\n\n'+(ctx.f.text||'')+FB_SIG})}
+];
+function renderFormulare(){
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  if(state.objekte.length===0)
+    return kopf('Formular-Bibliothek','Vorlagen',0.55)
+      +'<div class="empty reveal"><div class="es-ic">\uD83D\uDCC4</div><h3>Noch kein Objekt</h3><p>Legen Sie ein Objekt mit Mieter an \u2013 dann f\u00fcllen die Formulare Person und Wohnung automatisch aus.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'home\')">Zur Objektverwaltung</button></div></div>'+back;
+  const grps=['A. Vermietung / Vertragsbeginn','B. \u00dcbergabe / Einzug','C. Laufendes Mietverh\u00e4ltnis','D. Auszug / Beendigung','Allgemein'];
+  let body='';
+  grps.forEach(gr=>{ const items=FORMBLATT.filter(f=>f.grp===gr); if(!items.length)return;
+    body+='<div class="fb-grp">'+gr+'</div>'+items.map(f=>'<button class="fb-card reveal" onclick="openFormblattModal(\''+f.id+'\')"><div class="ti">'+f.titel+'</div><div class="be">'+f.be+'</div>'+(f.risiko?'<span class="risk">\u26A0 Verbandsmuster / anwaltliche Pr\u00fcfung vorrangig</span>':'')+'</button>').join('');
+  });
+  const disc='<div class="disc reveal">Arbeits- und Orientierungsvorlagen mit Auto-Ausf\u00fcllung aus Ihren Stammdaten \u2013 keine Rechtsberatung. Vermieter: Thomas Willwacher (Privatperson).</div>';
+  return kopf('Formular-Bibliothek','Vorlagen',0.55)
+    +'<div class="card reveal"><h3>Vorlage w\u00e4hlen</h3><p class="hint">Person und Wohnung werden automatisch \u00fcbernommen. Ausgabe als PDF im Briefkopf \u2013 nur noch unterschreiben.</p></div>'
+    +body+disc+back;
+}
+function openFormblattModal(id){
+  const def=FORMBLATT.find(x=>x.id===id); if(!def)return;
+  const objOpts='<option value="">\u2013</option>'+state.objekte.map(o=>'<option value="'+o.id+'">'+esc(o.bezeichnung)+'</option>').join('');
+  const felderHtml=def.felder.map(fl=>{
+    if(fl.type==='area') return '<div class="field"><label>'+fl.label+'</label><textarea id="f_'+fl.key+'" placeholder="'+(fl.ph||'')+'"></textarea></div>';
+    if(fl.type==='select') return '<div class="field"><label>'+fl.label+'</label><select id="f_'+fl.key+'">'+fl.options.map(o=>'<option>'+o+'</option>').join('')+'</select></div>';
+    const t=fl.type==='date'?'date':'text';
+    return '<div class="field"><label>'+fl.label+'</label><input id="f_'+fl.key+'" type="'+t+'"'+(fl.type==='num'?' inputmode="decimal"':'')+' placeholder="'+(fl.ph||'')+'"></div>';
+  }).join('');
+  document.getElementById('mTitle').textContent=def.titel;
+  document.getElementById('mBody').innerHTML=
+     (def.risiko?'<div class="notice" style="border-color:var(--accent-red);margin-bottom:12px"><b style="color:var(--accent-red-light)">Hochrisiko-Dokument</b><p>Vorrangig ein gepr\u00fcftes Verbandsmuster (Haus & Grund) bzw. anwaltliche Pr\u00fcfung verwenden.</p></div>':'')
+    +'<div class="field"><label>Objekt</label><select id="f_obj" onchange="fbObjChange()">'+objOpts+'</select></div>'
+    +'<div class="field"><label>Einheit / Wohnung</label><select id="f_einheit" onchange="fbEinheitChange()"></select></div>'
+    +'<div class="field"><label>Mieter / Person</label><input id="f_name" placeholder="wird aus Mietverh\u00e4ltnis \u00fcbernommen"></div>'
+    +felderHtml;
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-ghost" onclick="formblattPdf(\''+id+'\',\'print\')">\u00d6ffnen / Drucken</button><button class="btn btn-blue" onclick="formblattPdf(\''+id+'\',\'save\')">Als PDF</button>';
+  openModal(); fbObjChange();
+}
+function fbObjChange(){
+  const objSel=document.getElementById('f_obj'); if(!objSel)return;
+  const o=_o(objSel.value), eSel=document.getElementById('f_einheit'); const eh=(o&&o.einheiten)||[];
+  eSel.innerHTML='<option value="">\u2013 keine \u2013</option>'+eh.map(e=>'<option value="'+e.id+'">'+esc(e.bezeichnung)+'</option>').join('');
+  fbEinheitChange();
+}
+function fbEinheitChange(){
+  const objSel=document.getElementById('f_obj'),eSel=document.getElementById('f_einheit'),pIn=document.getElementById('f_name');
+  if(!objSel||!eSel||!pIn)return;
+  const o=_o(objSel.value), e=o&&(o.einheiten||[]).find(x=>x.id===eSel.value), akt=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+  pIn.value=akt?(akt.mieter||''):'';
+}
+function fbRenderSections(doc,sections,startY,foot){
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR; let y=startY;
+  sections.forEach(s=>{
+    if(s.t==='head'){ if(y>P.PAGE_H-MB-20){doc.addPage();y=P.MARGIN_T;} doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(196,30,30);doc.text(s.text,ML,y); y+=2; }
+    else if(s.t==='text'){ doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(40,40,40); const L=doc.splitTextToSize((s.text||'\u2014').replace(/\r/g,''),rx-ML); if(y>P.PAGE_H-MB-L.length*5){doc.addPage();y=P.MARGIN_T;} doc.text(L,ML,y+4); y+=L.length*5+6; }
+    else if(s.t==='table'){ doc.autoTable({startY:y+2,margin:{left:ML,right:MR,bottom:MB+8},body:s.rows,theme:'plain',styles:{font:'helvetica',fontSize:9.5,textColor:[34,34,34],cellPadding:{top:1.5,bottom:1.5,left:0,right:2}},columnStyles:s.cols||{0:{cellWidth:58,textColor:[110,110,110]},1:{cellWidth:'auto'}},didDrawPage:foot}); y=doc.lastAutoTable.finalY+5; }
+    else if(s.t==='grid'){ doc.autoTable({startY:y+2,margin:{left:ML,right:MR,bottom:MB+8},head:[s.head],body:s.rows,theme:'grid',showHead:'everyPage',styles:{font:'helvetica',fontSize:9,textColor:[34,34,34],cellPadding:{top:2,bottom:2,left:2,right:2},lineColor:[224,224,224],lineWidth:0.15},headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontStyle:'bold',fontSize:9},columnStyles:s.cols||{},didDrawPage:foot}); y=doc.lastAutoTable.finalY+5; }
+    else if(s.t==='sign'){ if(y>P.PAGE_H-MB-26){doc.addPage();y=P.MARGIN_T;} y+=16; const half=(rx-ML-12)/2; doc.setDrawColor(120,120,120);doc.setLineWidth(0.3); doc.line(ML,y,ML+half,y); doc.line(rx-half,y,rx,y); y+=4; doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90,90,90); doc.text(s.left||'Ort, Datum / Vermieter',ML,y); doc.text(s.right||'Ort, Datum / Mieter',rx-half,y); y+=6; }
+  });
+  return y;
+}
+function formblattPdf(id,mode){
+  if(!pdfReady()){ alert('PDF-Bibliothek wird noch geladen \u2013 bitte gleich erneut.'); return; }
+  const def=FORMBLATT.find(x=>x.id===id); if(!def)return;
+  const g=x=>document.getElementById(x);
+  const o=(g('f_obj')&&_o(g('f_obj').value))||null;
+  const e=o&&g('f_einheit')&&(o.einheiten||[]).find(x=>x.id===g('f_einheit').value);
+  const mv=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+  const adr=o?[o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '):'';
+  const emp={name:(g('f_name')?g('f_name').value:'')||'',einheit:e?e.bezeichnung:'',adresse:adr};
+  const f={}; def.felder.forEach(fl=>{ const el=g('f_'+fl.key); f[fl.key]=el?el.value:''; });
+  const ctx={o:o||{bezeichnung:''},e,mv,emp,f,today:new Date(),D:fmtDate,eur,frist:d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toLocaleDateString('de-DE');}};
+  const out=def.build(ctx);
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, rx=P.PAGE_W-MR;
+  const foot=()=>tw_drawBriefkopfFooter(doc,doc.internal.getNumberOfPages());
+  let y=tw_drawBriefkopfHeader(doc);
+  if(def.empf && emp.name){ y=tw_drawEmpfaengerBlock(doc,y,{name:emp.name,zusatz:(emp.einheit||'')+(emp.adresse?' \u00b7 '+emp.adresse:''),datum:new Date()}); }
+  else { doc.setFontSize(9);doc.setTextColor(136,136,136);doc.text('Datum: '+new Date().toLocaleDateString('de-DE'),rx,y,{align:'right'}); y+=8; }
+  doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(17,17,17);
+  const bt=doc.splitTextToSize(out.betreff||def.titel,rx-ML); doc.text(bt,ML,y); y+=bt.length*6+3;
+  if(def.risiko){ doc.setFont('helvetica','italic');doc.setFontSize(8.5);doc.setTextColor(196,30,30); const hr=doc.splitTextToSize('Hinweis: Vorrangig gepr\u00fcftes Verbandsmuster (Haus & Grund) bzw. anwaltliche Pr\u00fcfung verwenden. Arbeitshilfe, keine Rechtsberatung.',rx-ML); doc.text(hr,ML,y); y+=hr.length*4+3; }
+  let tabledrawn=false;
+  if(out.typ==='protokoll'){ tabledrawn=(out.sections||[]).some(s=>s.t==='table'||s.t==='grid'); y=fbRenderSections(doc,out.sections||[],y,foot); }
+  else { doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(40,40,40); const L=doc.splitTextToSize((out.text||'').replace(/\r/g,''),rx-ML); doc.text(L,ML,y); }
+  if(!tabledrawn) tw_drawBriefkopfFooter(doc,doc.internal.getNumberOfPages());
+  if(mode!=='print' && o){ o.dokumente=o.dokumente||[]; o.dokumente.push({id:uid(),name:def.titel,art:'Formblatt',datum:new Date().toISOString().slice(0,10)}); o.geaendert=Date.now(); save(); }
+  const fn=def.titel.replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/ +/g,'_')+(emp.name?'_'+emp.name.replace(/[^a-zA-Z0-9]/g,''):'');
+  if(mode==='print'){ try{ window.open(doc.output('bloburl'),'_blank'); }catch(e){ doc.save(fn+'.pdf'); } }
+  else doc.save(fn+'.pdf');
 }
 
 /* ============================================================
