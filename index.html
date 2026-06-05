@@ -538,7 +538,7 @@ function cloudGetToken(interactive){
     try{
       const tc=google.accounts.oauth2.initTokenClient({
         client_id:cloudCfg.clientId,
-        scope:'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.send',
+        scope:'https://www.googleapis.com/auth/drive.file',
         callback:resp=>{ if(resp&&resp.access_token){ cloudToken=resp.access_token; cloudTokenExp=Date.now()+(Number(resp.expires_in||3600)*1000); resolve(cloudToken); } else reject(new Error('Keine Berechtigung erhalten.')); },
         error_callback:err=>reject(new Error('OAuth-Fehler ('+((err&&err.type)||'?')+'). Ist '+location.origin+' als autorisierte JavaScript-Quelle in der Google Cloud Console eingetragen?'))
       });
@@ -737,7 +737,7 @@ const ICON_CAM='<path d="M4 11.5a2 2 0 012-2h2.2l1.5-2.4a1.5 1.5 0 011.3-.7h6a1.
 
 /* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
-  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v4 (Markierung + Schl\u00fcsselliste)<br>'
+  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v5 (Login-Fix)<br>'
     +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
   return '<div class="home-logo reveal">'+logoHTML(1.2)+'</div>'
     + '<div class="home-block">'
@@ -1140,16 +1140,9 @@ async function protoMail(){
   const to=(proto.empfaengerMail||'').trim();
   if(!to || to.indexOf('@')<1){ alert('Bitte zuerst eine g\u00fcltige E-Mail-Adresse des Mieters eintragen.'); return; }
   const b=protoBuildDoc(); if(!b) return;
-  const b64=(b.doc.output('datauristring')||'').split(',').pop();
   const body='Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie eine Kopie des Protokolls \u201E'+b.titel+'\u201C als PDF-Datei.\n\nMit freundlichen Gr\u00fc\u00dfen\n'+(TW_PDF.FIRMA_NAME||'');
-  if(cloudCfg.connected && cloudCfg.clientId){
-    try{ protoStatus('Sende Mail \u00fcber Gmail an '+to+'\u2026'); await gmailSend(to,b.titel,body,b.fn,b64); protoStatus('Kopie per Mail an '+to+' gesendet (auch in Ihrem Gmail-Ordner \u201EGesendet\u201C).'); return; }
-    catch(e){
-      try{ cloudToken=null; await cloudGetToken(true); await gmailSend(to,b.titel,body,b.fn,b64); protoStatus('Kopie per Mail an '+to+' gesendet.'); return; }
-      catch(e2){ protoStatus('Gmail-Versand nicht m\u00f6glich ('+e2.message+'). Ich \u00f6ffne Ihr Mailprogramm \u2013 bitte das gespeicherte PDF anh\u00e4ngen.'); }
-    }
-  } else { protoStatus('Nicht mit Google verbunden \u2013 ich \u00f6ffne Ihr Mailprogramm. Bitte das PDF aus dem Download anh\u00e4ngen.'); }
-  try{ b.doc.save(b.fn); }catch(e){}
+  try{ b.doc.save(b.fn); }catch(e){ try{ window.open(b.doc.output('bloburl'),'_blank'); }catch(e2){} }
+  protoStatus('PDF gespeichert. Ihr Mailprogramm \u00f6ffnet sich \u2013 bitte das PDF anh\u00e4ngen und an den Mieter senden.');
   try{ window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(b.titel)+'&body='+encodeURIComponent(body+'\n\n(Bitte das soeben gespeicherte PDF anh\u00e4ngen.)'); }catch(e){}
 }
 function protoStatus(t){ const el=document.getElementById('protoStatus'); if(el) el.textContent=t; }
