@@ -331,6 +331,8 @@ body::before{
 .pr-foto img{width:100%;height:100%;object-fit:cover;display:block}
 .pr-fx{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(196,30,30,.92);color:#fff;font-size:11px;cursor:pointer;line-height:1;padding:0}
 .pr-nofoto{grid-column:1/-1;color:var(--text-muted);font-size:12px;font-style:italic;padding:4px 0;font-family:'Source Sans 3',sans-serif}
+.proto-pick-btns{display:flex;gap:8px;flex-wrap:wrap}
+.proto-pick-btns .btn{flex:1;min-width:120px}
 .sigpad{width:100%;height:170px;background:#fff;border:1px solid var(--border-color);border-radius:var(--radius-sm);touch-action:none;display:block;margin-top:6px}
 .sighint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic;font-family:'Source Sans 3',sans-serif}
 .sig-slots{display:flex;gap:12px;margin-top:6px}
@@ -354,6 +356,7 @@ body::before{
 </div>
 <input type="file" id="importFile" accept="application/json" style="display:none">
 <input type="file" id="protoFile" accept="image/*" multiple style="display:none">
+<input type="file" id="protoCamFile" accept="image/*" capture="environment" style="display:none">
 
 <script>
 /* ============================================================
@@ -685,6 +688,7 @@ const ICON_MODULE='<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="white
 const ICON_DRIVE='<path d="M8 22h15a5 5 0 100-10 7 7 0 00-13.5 1.5A4.5 4.5 0 008 22z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
 const ICON_EINZUG='<rect x="17" y="5" width="9" height="22" rx="1" stroke="white" stroke-width="2" fill="none"/><path d="M4 16h13M11 11l6 5-6 5" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
 const ICON_AUSZUG='<rect x="6" y="5" width="9" height="22" rx="1" stroke="white" stroke-width="2" fill="none"/><path d="M28 16H15M22 11l6 5-6 5" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
+const ICON_CAM='<path d="M4 11.5a2 2 0 012-2h2.2l1.5-2.4a1.5 1.5 0 011.3-.7h6a1.5 1.5 0 011.3.7l1.5 2.4H26a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round"/><circle cx="16" cy="16.5" r="4.5" stroke="white" stroke-width="2" fill="none"/>';
 
 /* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
@@ -869,7 +873,10 @@ function protoRoomHtml(r,i){
     +'<div class="field" style="margin-top:8px"><label>M\u00e4ngel / Besonderheiten</label><textarea oninput="protoRoomMaengel('+i+',this.value)" placeholder="frei">'+esc(r.maengel)+'</textarea></div>'
     +'<div class="pr-fotos-h">Fotos <span class="pr-hint">(6\u20138 je Zimmer empfohlen)</span></div>'
     +'<div class="proto-fotos" id="proto-fotos-'+i+'">'+protoFotoStripHtml(r,i)+'</div>'
-    +'<button class="btn btn-blue btn-sm" onclick="protoPhotoPick('+i+')">+ Fotos hinzuf\u00fcgen</button>'
+    +'<div class="proto-pick-btns">'
+    +  '<button class="btn btn-blue btn-sm" onclick="protoPhotoCapture('+i+')"><svg viewBox="0 0 32 32" fill="none" style="width:15px;height:15px;margin-right:5px;vertical-align:-2px">'+ICON_CAM.replace(/white/g,'currentColor')+'</svg>Foto aufnehmen</button>'
+    +  '<button class="btn btn-ghost btn-sm" onclick="protoPhotoPick('+i+')">Galerie</button>'
+    +'</div>'
     +'</div>';
 }
 function protoFotoStripHtml(r,i){
@@ -886,6 +893,13 @@ function protoRemoveRoom(i){ if(proto.raeume.length<=1)return; proto.raeume.spli
 function protoRenderFotos(i){ const el=document.getElementById('proto-fotos-'+i); if(el) el.innerHTML=protoFotoStripHtml(proto.raeume[i],i); }
 function protoRemovePhoto(i,k){ const r=proto.raeume[i]; if(r){ r.fotos.splice(k,1); protoSaveDraft(); protoRenderFotos(i); } }
 function protoPhotoPick(i){ protoPhotoTarget=i; const inp=document.getElementById('protoFile'); if(inp){ inp.value=''; inp.click(); } }
+function protoPhotoCapture(i){ protoPhotoTarget=i; const inp=document.getElementById('protoCamFile'); if(inp){ inp.value=''; inp.click(); } }
+async function protoIngest(files){
+  const i=protoPhotoTarget; const arr=Array.from(files||[]);
+  if(i<0 || !proto || !proto.raeume[i] || !arr.length) return;
+  for(const f of arr){ const c=await protoCompress(f); if(c) proto.raeume[i].fotos.push(c); }
+  protoSaveDraft(); protoRenderFotos(i);
+}
 function protoCompress(file){
   return new Promise(res=>{
     const r=new FileReader();
@@ -2393,12 +2407,8 @@ document.getElementById('importFile').addEventListener('change',e=>{
     catch(err){ alert('Datei konnte nicht gelesen werden. Bitte eine g\u00fcltige Sicherungsdatei w\u00e4hlen.'); } };
   r.readAsText(f); e.target.value='';
 });
-document.getElementById('protoFile').addEventListener('change', async e=>{
-  const files=Array.from(e.target.files||[]); const i=protoPhotoTarget; e.target.value='';
-  if(i<0 || !proto || !proto.raeume[i] || !files.length) return;
-  for(const f of files){ const c=await protoCompress(f); if(c) proto.raeume[i].fotos.push(c); }
-  protoSaveDraft(); protoRenderFotos(i);
-});
+document.getElementById('protoFile').addEventListener('change', async e=>{ const f=e.target.files; e.target.value=''; await protoIngest(f); });
+document.getElementById('protoCamFile').addEventListener('change', async e=>{ const f=e.target.files; e.target.value=''; await protoIngest(f); });
 function wipe(){
   document.getElementById('mTitle').textContent='Alle Daten l\u00f6schen';
   document.getElementById('mBody').innerHTML='<p class="q">Wirklich <b>alle Objekte und Daten</b> unwiderruflich l\u00f6schen? Vorher ggf. sichern.</p>';
