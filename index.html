@@ -334,6 +334,7 @@ body::before{
 .pr-nofoto{grid-column:1/-1;color:var(--text-muted);font-size:12px;font-style:italic;padding:4px 0;font-family:'Source Sans 3',sans-serif}
 .proto-pick-btns{display:flex;gap:8px;flex-wrap:wrap}
 .proto-pick-btns .btn{flex:1;min-width:120px}
+.pr-msg{font-size:12px;color:var(--accent-blue);margin-top:7px;min-height:14px;font-family:'Source Sans 3',sans-serif}
 .sigpad{width:100%;height:170px;background:#fff;border:1px solid var(--border-color);border-radius:var(--radius-sm);touch-action:none;display:block;margin-top:6px}
 .sighint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic;font-family:'Source Sans 3',sans-serif}
 .sig-slots{display:flex;gap:12px;margin-top:6px}
@@ -872,12 +873,13 @@ function protoRoomHtml(r,i){
     +'<button class="wiz-rm" onclick="protoRemoveRoom('+i+')">\u2715</button></div>'
     +'<div class="proto-items">'+items+'</div>'
     +'<div class="field" style="margin-top:8px"><label>M\u00e4ngel / Besonderheiten</label><textarea oninput="protoRoomMaengel('+i+',this.value)" placeholder="frei">'+esc(r.maengel)+'</textarea></div>'
-    +'<div class="pr-fotos-h">Fotos <span class="pr-hint">(6\u20138 je Zimmer empfohlen)</span></div>'
+    +'<div class="pr-fotos-h">Fotos <span class="pr-hint" id="proto-cnt-'+i+'">'+protoCntLabel(r)+'</span></div>'
     +'<div class="proto-fotos" id="proto-fotos-'+i+'">'+protoFotoStripHtml(r,i)+'</div>'
     +'<div class="proto-pick-btns">'
     +  '<button class="btn btn-blue btn-sm" onclick="protoPhotoCapture('+i+')"><svg viewBox="0 0 32 32" fill="none" style="width:15px;height:15px;margin-right:5px;vertical-align:-2px">'+ICON_CAM.replace(/white/g,'currentColor')+'</svg>Foto aufnehmen</button>'
     +  '<button class="btn btn-ghost btn-sm" onclick="protoPhotoPick('+i+')">Galerie</button>'
     +'</div>'
+    +'<div class="pr-msg" id="proto-msg-'+i+'"></div>'
     +'</div>';
 }
 function protoFotoStripHtml(r,i){
@@ -898,27 +900,44 @@ function protoRoomName(i,v){ const r=proto.raeume[i]; if(r){ r.name=v; protoSave
 function protoRoomMaengel(i,v){ const r=proto.raeume[i]; if(r){ r.maengel=v; protoSaveDraft(); } }
 function protoAddRoom(){ proto.raeume.push(protoMkRoom('Weiterer Raum',false)); protoSaveDraft(); render(); }
 function protoRemoveRoom(i){ if(proto.raeume.length<=1)return; proto.raeume.splice(i,1); protoSaveDraft(); render(); }
-function protoRenderFotos(i){ const el=document.getElementById('proto-fotos-'+i); if(el) el.innerHTML=protoFotoStripHtml(proto.raeume[i],i); }
+function protoRenderFotos(i){ const el=document.getElementById('proto-fotos-'+i); if(el) el.innerHTML=protoFotoStripHtml(proto.raeume[i],i); protoFotoCount(i); }
 function protoRemovePhoto(i,k){ const r=proto.raeume[i]; if(r){ r.fotos.splice(k,1); protoSaveDraft(); protoRenderFotos(i); } }
 function protoPhotoPick(i){ protoPhotoTarget=i; const inp=document.getElementById('protoFile'); if(inp){ inp.value=''; inp.click(); } }
 function protoPhotoCapture(i){ protoPhotoTarget=i; const inp=document.getElementById('protoCamFile'); if(inp){ inp.value=''; inp.click(); } }
 async function protoIngest(files){
   const i=protoPhotoTarget; const arr=Array.from(files||[]);
   if(i<0 || !proto || !proto.raeume[i] || !arr.length) return;
-  for(const f of arr){ const c=await protoCompress(f); if(c) proto.raeume[i].fotos.push(c); }
-  protoSaveDraft(); protoRenderFotos(i);
+  protoMsg(i,'Foto wird verarbeitet\u2026'); let added=0;
+  for(const f of arr){ try{ const c=await protoCompress(f); if(c&&c.data){ proto.raeume[i].fotos.push(c); added++; } }catch(e){} }
+  protoSaveDraft();
+  if(document.getElementById('proto-fotos-'+i)){ protoRenderFotos(i); protoMsg(i, added? (added+' Foto'+(added>1?'s':'')+' hinzugef\u00fcgt \u2013 siehe oben.') : 'Foto konnte nicht gelesen werden \u2013 bitte erneut versuchen.'); }
+  else { render(); }
 }
+function protoCntLabel(r){ const n=((r&&r.fotos)||[]).length; return n? '('+n+' Foto'+(n>1?'s':'')+')' : '(6\u20138 je Zimmer empfohlen)'; }
+function protoFotoCount(i){ const el=document.getElementById('proto-cnt-'+i); if(el&&proto&&proto.raeume[i]) el.textContent=protoCntLabel(proto.raeume[i]); }
+function protoMsg(i,t){ const el=document.getElementById('proto-msg-'+i); if(el) el.textContent=t||''; }
 function protoCompress(file){
   return new Promise(res=>{
     const r=new FileReader();
-    r.onload=()=>{ const img=new Image();
-      img.onload=()=>{ const max=1280; let w=img.width,h=img.height;
-        if(w>h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
-        try{ const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
-          res({data:c.toDataURL('image/jpeg',0.62),w,h}); }
-        catch(e){ res({data:r.result,w:img.width||1000,h:img.height||750}); } };
-      img.onerror=()=>res(null); img.src=r.result; };
-    r.onerror=()=>res(null); r.readAsDataURL(file);
+    r.onerror=()=>res(null);
+    r.onload=()=>{
+      const raw=r.result; let done=false;
+      const finish=o=>{ if(!done){ done=true; res(o); } };
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const max=1280; let w=img.naturalWidth||img.width||1000, h=img.naturalHeight||img.height||750;
+          if(w>h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+          const c=document.createElement('canvas'); c.width=w; c.height=h;
+          const ctx=c.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+          finish({data:c.toDataURL('image/jpeg',0.6),w:w,h:h});
+        }catch(e){ finish({data:raw,w:img.naturalWidth||1000,h:img.naturalHeight||750}); }
+      };
+      img.onerror=()=>finish({data:raw,w:1000,h:750}); // Bild trotzdem behalten, nicht verwerfen
+      setTimeout(()=>finish({data:raw,w:1000,h:750}),5000); // Notbremse: nie haengen bleiben
+      img.src=raw;
+    };
+    r.readAsDataURL(file);
   });
 }
 
@@ -965,7 +984,7 @@ function protoBuildDoc(){
         const hs=pair.map(f=>{ const ratio=(f.h&&f.w)?f.h/f.w:0.72; return Math.min(cellW*ratio,62); });
         const rowH=Math.max.apply(null,hs);
         need(rowH+gap);
-        pair.forEach((f,k)=>{ const x=ML+k*(cellW+gap); try{ doc.addImage(f.data,'JPEG',x,y,cellW,hs[k],undefined,'FAST'); }catch(e){ try{ doc.addImage(f.data,'JPEG',x,y,cellW,hs[k]); }catch(e2){} } });
+        pair.forEach((f,k)=>{ const x=ML+k*(cellW+gap); const fmt=(typeof f.data==='string'&&f.data.indexOf('image/png')>=0)?'PNG':'JPEG'; try{ doc.addImage(f.data,fmt,x,y,cellW,hs[k],undefined,'FAST'); }catch(e){ try{ doc.addImage(f.data,fmt,x,y,cellW,hs[k]); }catch(e2){ try{ doc.addImage(f.data,'JPEG',x,y,cellW,hs[k]); }catch(e3){} } } });
         y+=rowH+gap;
       }
     }
