@@ -262,6 +262,11 @@ body::before{
 
 /* ===== Startseite (Business-Suite-Stil): Logo + Uhr + 2 Aktionen + Drive ===== */
 .home-kopf{margin-bottom:16px}
+/* Logo oben: ca. 2 cm tiefer + ~50% groesser; Block (Ueberschrift/Uhr/Buttons): ca. 5 cm tiefer */
+.home-logo{display:flex;justify-content:center;margin-top:2cm;margin-bottom:0}
+@media (max-width:440px){ .home-logo .logo-container{transform:scale(1.0)!important} } /* Handy: Logo passt ohne Abschneiden */
+.home-block{margin-top:3cm} /* Ueberschrift+Uhr 2 cm hoeher als zuvor (war 5cm); Buttons werden unten ausgeglichen */
+.home-title{text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:500;margin-bottom:14px}
 .hv-clock{position:relative;overflow:hidden;margin:0 0 18px;padding:22px 20px;border-radius:var(--radius-lg);text-align:center;
   background:linear-gradient(135deg,rgba(15,25,35,.96) 0%,rgba(20,40,70,.92) 100%);
   border:1px solid rgba(77,166,255,.22);box-shadow:0 8px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)}
@@ -276,7 +281,7 @@ body::before{
 @keyframes colonPulse{0%,100%{opacity:1}50%{opacity:.25}}
 .hv-clock .date{position:relative;font-size:14px;font-weight:500;color:rgba(255,255,255,.62);letter-spacing:1.5px}
 .hv-clock .line{position:relative;margin:12px auto 0;width:60px;height:2px;border-radius:1px;background:linear-gradient(90deg,transparent,rgba(77,166,255,.45),transparent)}
-.home-actions{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.home-actions{display:flex;flex-direction:column;gap:12px;margin-top:2cm;margin-bottom:12px}
 .home-btn{width:100%;padding:18px 24px;font-size:15px;letter-spacing:.6px}
 .home-btn .ic{width:22px;height:22px;flex:none}.home-btn .ic svg{width:22px;height:22px;display:block}
 .drive-btn{width:100%;padding:14px 20px;color:#fff;font-family:'Oswald',sans-serif;position:relative;border:none}
@@ -617,17 +622,20 @@ function stopClock(){ if(clockTimer){ clearInterval(clockTimer); clockTimer=null
 const ICON_MODULE='<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="18" y="5" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="5" y="18" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="18" y="18" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/>';
 const ICON_DRIVE='<path d="M8 22h15a5 5 0 100-10 7 7 0 00-13.5 1.5A4.5 4.5 0 008 22z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
 
-/* ---------- Startseite: nur Logo + Uhr + 2 Aktionen + Drive (Business-Suite-Stil) ---------- */
+/* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
   const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v1<br>'
     +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
-  return '<div class="kopf home-kopf">'+logoHTML(0.82)+'<div class="label">Hausverwaltung</div></div>'
-    + clockHTML()
-    + '<div class="home-actions">'
-    +   '<button class="btn btn-red home-btn reveal d2" onclick="go(\'objekte\')"><span class="ic">'+svgWrapC(I.haus)+'</span> Objektauswahl</button>'
-    +   '<button class="btn btn-red home-btn reveal d2" onclick="go(\'verwaltung\')"><span class="ic">'+svgWrapC(ICON_MODULE)+'</span> Verwaltung</button>'
+  return '<div class="home-logo reveal">'+logoHTML(1.2)+'</div>'
+    + '<div class="home-block">'
+    +   '<div class="home-title reveal">Hausverwaltung</div>'
+    +   clockHTML()
+    +   '<div class="home-actions">'
+    +     '<button class="btn btn-red home-btn reveal d2" onclick="go(\'objekte\')"><span class="ic">'+svgWrapC(I.haus)+'</span> Objektauswahl</button>'
+    +     '<button class="btn btn-red home-btn reveal d2" onclick="go(\'verwaltung\')"><span class="ic">'+svgWrapC(ICON_MODULE)+'</span> Verwaltung</button>'
+    +   '</div>'
+    +   driveButtonHTML()
     + '</div>'
-    + driveButtonHTML()
     + foot;
 }
 
