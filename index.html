@@ -89,19 +89,21 @@ body::before{
 .tile .arrow{font-size:18px;opacity:.7;flex:none}
 .tile .meta-r{font-size:11px;opacity:.85;font-family:'Oswald',sans-serif;text-align:right;flex:none;line-height:1.3}
 
-/* Add-Kachel (Objekt anlegen) */
-.tile.add{background:var(--bg-secondary);border:1.5px dashed var(--accent-blue);box-shadow:none;color:var(--accent-blue)}
-.tile.add:hover{background:var(--bg-tertiary);transform:translateY(-2px)}
-.tile.add .t{color:var(--accent-blue)}
+/* Add-Kachel (Objekt anlegen) — gefuelltes Blau */
+.tile.add{background:var(--grad-blue);border:1px solid transparent;box-shadow:0 6px 20px var(--sh-blue);color:#fff}
+.tile.add:hover{background:var(--grad-blue);filter:brightness(1.06);transform:translateY(-2px)}
+.tile.add .t,.tile.add .ic{color:#fff}
 
-/* Neutrale Nav-Kachel (Verwaltung/Module) */
-.navtile{width:100%;padding:13px 15px;border-radius:var(--radius-md);border:1px solid var(--border-color);cursor:pointer;
-  background:var(--bg-secondary);color:var(--text-primary);display:flex;align-items:center;gap:12px;text-align:left;transition:all .18s ease;margin-bottom:8px;font-family:inherit}
-.navtile:hover{background:var(--bg-tertiary);border-color:var(--accent-blue)}
-.navtile .ic{width:24px;height:24px;flex:none;color:var(--accent-blue)}
+/* Verwaltungs-/Modul-Kachel — durchgehend Blau (auch inaktive) */
+.navtile{width:100%;padding:14px 15px;border-radius:var(--radius-md);border:1px solid transparent;cursor:pointer;
+  background:var(--grad-blue);color:#fff;display:flex;align-items:center;gap:12px;text-align:left;transition:all .18s ease;margin-bottom:8px;font-family:inherit;box-shadow:0 4px 15px var(--sh-blue)}
+.navtile:hover{filter:brightness(1.07);border-color:#fff;transform:translateY(-2px)}
+.navtile .ic{width:24px;height:24px;flex:none;color:#fff}
 .navtile .ic svg{width:24px;height:24px;display:block}
 .navtile .t{flex:1;font-size:14px;font-weight:600;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px}
-.navtile .d{font-size:11px;color:var(--text-muted);font-family:'Source Sans 3',sans-serif}
+.navtile .d{font-size:11px;color:rgba(255,255,255,.82);font-family:'Source Sans 3',sans-serif}
+.navtile .badge.ok{background:rgba(255,255,255,.22);color:#fff}
+.navtile .badge.soon{background:rgba(255,255,255,.18);color:#fff}
 
 /* Badges */
 .badge{display:inline-flex;align-items:center;border-radius:16px;font-size:10px;font-weight:600;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px}
@@ -257,6 +259,34 @@ body::before{
 .field textarea{resize:vertical;min-height:60px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hint{font-size:11px;color:var(--text-muted);margin-top:4px;font-family:'Source Sans 3',sans-serif}
+
+/* ===== Startseite (Business-Suite-Stil): Logo + Uhr + 2 Aktionen + Drive ===== */
+.home-kopf{margin-bottom:16px}
+.hv-clock{position:relative;overflow:hidden;margin:0 0 18px;padding:22px 20px;border-radius:var(--radius-lg);text-align:center;
+  background:linear-gradient(135deg,rgba(15,25,35,.96) 0%,rgba(20,40,70,.92) 100%);
+  border:1px solid rgba(77,166,255,.22);box-shadow:0 8px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)}
+.hv-clock::before{content:"";position:absolute;top:-22px;right:-22px;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(77,166,255,.15) 0%,transparent 70%);pointer-events:none}
+.hv-clock::after{content:"";position:absolute;bottom:-16px;left:-16px;width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(39,174,96,.10) 0%,transparent 70%);pointer-events:none}
+.hv-clock .day{position:relative;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:rgba(77,166,255,.78);letter-spacing:5px;text-transform:uppercase;margin-bottom:6px}
+.hv-clock .time{position:relative;font-family:'Oswald',sans-serif;font-size:56px;font-weight:300;color:#fff;letter-spacing:4px;line-height:1;margin-bottom:8px}
+.hv-clock .time .sec{font-size:23px;font-weight:300;color:rgba(255,255,255,.35);margin-left:4px;vertical-align:super}
+.hv-clock .clock-colon{color:var(--accent-blue);font-weight:200;animation:colonPulse 1s ease-in-out infinite}
+@keyframes colonPulse{0%,100%{opacity:1}50%{opacity:.25}}
+.hv-clock .date{position:relative;font-size:14px;font-weight:500;color:rgba(255,255,255,.62);letter-spacing:1.5px}
+.hv-clock .line{position:relative;margin:12px auto 0;width:60px;height:2px;border-radius:1px;background:linear-gradient(90deg,transparent,rgba(77,166,255,.45),transparent)}
+.home-actions{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.home-btn{width:100%;padding:18px 24px;font-size:15px;letter-spacing:.6px}
+.home-btn .ic{width:22px;height:22px;flex:none}.home-btn .ic svg{width:22px;height:22px;display:block}
+.drive-btn{width:100%;padding:14px 20px;color:#fff;font-family:'Oswald',sans-serif;position:relative;border:none}
+.drive-btn .ic{width:20px;height:20px;flex:none}.drive-btn .ic svg{width:20px;height:20px;display:block}
+.drive-off{background:var(--grad-blue);box-shadow:0 4px 15px var(--sh-blue)}
+.drive-on{background:linear-gradient(135deg,#2ecc71,var(--success));box-shadow:0 4px 15px rgba(39,174,96,.32)}
+.drive-busy{background:linear-gradient(135deg,var(--accent-orange-light),var(--accent-orange));box-shadow:0 4px 15px rgba(230,126,34,.30)}
+.drive-setup{background:var(--bg-secondary);border:1px solid var(--border-color);color:var(--text-light);box-shadow:none}
+.drive-dot{position:absolute;top:8px;right:10px;width:7px;height:7px;border-radius:50%;background:#eafff2;box-shadow:0 0 7px rgba(255,255,255,.7)}
+.drive-status{font-size:10.5px;color:var(--text-muted);text-align:center;margin:8px 0 0;font-family:'Source Sans 3',sans-serif;font-style:italic}
 </style>
 </head>
 <body>
@@ -391,7 +421,7 @@ let cloudCfg=(function(){ try{ return JSON.parse(localStorage.getItem(CKEY))||{}
 let cloudToken=null, cloudTokenExp=0, cloudPushTimer=null, cloudStatus='';
 function cloudCfgSave(){ try{ localStorage.setItem(CKEY,JSON.stringify(cloudCfg)); }catch(e){} }
 function cloudSaveClientId(v){ cloudCfg.clientId=(v||'').trim(); cloudCfgSave(); }
-function setCloudStatus(s){ cloudStatus=s; if(view==='stamm') render(); }
+function setCloudStatus(s){ cloudStatus=s; if(view==='stamm'||view==='home') render(); }
 function cloudReady(){ return !!(window.google&&google.accounts&&google.accounts.oauth2); }
 function cloudGisWait(ms){ return new Promise(res=>{ const t0=Date.now(); (function chk(){ if(cloudReady())return res(true); if(Date.now()-t0>(ms||5000))return res(false); setTimeout(chk,150); })(); }); }
 function cloudGetToken(interactive){
@@ -458,13 +488,13 @@ async function cloudConnect(interactive){
     await cloudPull();
     cloudCfg.connected=true; cloudCfg.lastSync=Date.now(); cloudCfgSave();
     setCloudStatus('Synchronisiert.');
-    if(view==='stamm') render();
+    if(view==='stamm'||view==='home') render();
   }catch(e){ setCloudStatus('Fehler: '+e.message); if(interactive) alert(e.message); }
 }
 function cloudPushDebounced(){
   if(!cloudCfg.connected||!cloudCfg.clientId) return;
   clearTimeout(cloudPushTimer);
-  cloudPushTimer=setTimeout(async()=>{ try{ await cloudGetToken(false); await cloudEnsureFile(); await cloudUpload(); cloudCfg.lastSync=Date.now(); cloudCfgSave(); if(view==='stamm')render(); }catch(e){ setCloudStatus('Sync-Fehler: '+e.message); } },1500);
+  cloudPushTimer=setTimeout(async()=>{ try{ await cloudGetToken(false); await cloudEnsureFile(); await cloudUpload(); cloudCfg.lastSync=Date.now(); cloudCfgSave(); if(view==='stamm'||view==='home')render(); }catch(e){ setCloudStatus('Sync-Fehler: '+e.message); } },1500);
 }
 async function cloudSyncNow(){ await cloudConnect(false); }
 function cloudDisconnect(){ cloudCfg.connected=false; cloudToken=null; cloudCfgSave(); setCloudStatus('Getrennt.'); render(); }
@@ -528,6 +558,8 @@ function go(v,id){ view=v; selId=id||null; render(); window.scrollTo(0,0); }
 function render(){
   const el=document.getElementById('view');
   if(view==='home') el.innerHTML=renderHome();
+  else if(view==='objekte') el.innerHTML=renderObjekte();
+  else if(view==='verwaltung') el.innerHTML=renderVerwaltung();
   else if(view==='detail') el.innerHTML=renderDetail();
   else if(view==='stamm') el.innerHTML=renderStamm();
   else if(view==='nk') el.innerHTML=renderNk();
@@ -536,41 +568,93 @@ function render(){
   else if(view==='recht') el.innerHTML=renderRecht();
   else if(view==='formulare') el.innerHTML=renderFormulare();
   else el.innerHTML=renderSoon(view);
-  const fab=document.getElementById('printFab'); if(fab) fab.style.display=(view==='home')?'none':'flex';
+  // Print-FAB nur in Arbeitsmodulen, nicht auf den Navigations-Startseiten
+  const hub=(view==='home'||view==='objekte'||view==='verwaltung');
+  const fab=document.getElementById('printFab'); if(fab) fab.style.display=hub?'none':'flex';
+  // Live-Uhr nur auf der Startseite laufen lassen
+  if(view==='home') startClock(); else stopClock();
 }
 
-/* ---------- Startseite: Logo + Hausverwaltung + Objektauswahl ---------- */
+/* ---------- Live-Uhr (Business-Suite-Stil) ---------- */
+let clockTimer=null;
+const TAGE=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MONATE=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+function clockInner(){
+  const t=new Date(), p=n=>String(n).padStart(2,'0');
+  return '<div class="day">'+TAGE[t.getDay()]+'</div>'
+    +'<div class="time"><span>'+p(t.getHours())+'</span><span class="clock-colon">:</span><span>'+p(t.getMinutes())+'</span><span class="sec">'+p(t.getSeconds())+'</span></div>'
+    +'<div class="date">'+t.getDate()+'. '+MONATE[t.getMonth()]+' '+t.getFullYear()+'</div>'
+    +'<div class="line"></div>';
+}
+function clockHTML(){ return '<div class="hv-clock reveal d1" id="hvClock">'+clockInner()+'</div>'; }
+function startClock(){
+  if(clockTimer) return;
+  clockTimer=setInterval(()=>{ const el=document.getElementById('hvClock'); if(!el){ stopClock(); return; } el.innerHTML=clockInner(); },1000);
+}
+function stopClock(){ if(clockTimer){ clearInterval(clockTimer); clockTimer=null; } }
+
+/* ---------- Icons fuer Startseiten-Buttons ---------- */
+const ICON_MODULE='<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="18" y="5" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="5" y="18" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="18" y="18" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/>';
+const ICON_DRIVE='<path d="M8 22h15a5 5 0 100-10 7 7 0 00-13.5 1.5A4.5 4.5 0 008 22z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
+
+/* ---------- Startseite: nur Logo + Uhr + 2 Aktionen + Drive (Business-Suite-Stil) ---------- */
 function renderHome(){
+  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v1<br>'
+    +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
+  return '<div class="kopf home-kopf">'+logoHTML(0.82)+'<div class="label">Hausverwaltung</div></div>'
+    + clockHTML()
+    + '<div class="home-actions">'
+    +   '<button class="btn btn-red home-btn reveal d2" onclick="go(\'objekte\')"><span class="ic">'+svgWrapC(I.haus)+'</span> Objektauswahl</button>'
+    +   '<button class="btn btn-red home-btn reveal d2" onclick="go(\'verwaltung\')"><span class="ic">'+svgWrapC(ICON_MODULE)+'</span> Verwaltung</button>'
+    + '</div>'
+    + driveButtonHTML()
+    + foot;
+}
+
+/* Google-Drive-Verbindungsbutton: gruen wenn verbunden, blau wenn nicht, orange beim Verbinden */
+function driveButtonHTML(){
+  const conn=!!cloudCfg.connected;
+  const busy=/Verbinde/i.test(cloudStatus||'');
+  const ic='<span class="ic">'+svgWrapC(ICON_DRIVE)+'</span>';
+  let html;
+  if(!cloudCfg.clientId){
+    html='<button class="btn drive-btn drive-setup reveal d3" onclick="go(\'stamm\')">'+ic+'<span>Google Drive einrichten</span></button>';
+  } else if(conn){
+    html='<button class="btn drive-btn drive-on reveal d3" onclick="cloudSyncNow()">'+ic+'<span>Google Drive verbunden</span><span class="drive-dot"></span></button>';
+  } else if(busy){
+    html='<button class="btn drive-btn drive-busy reveal d3" disabled>'+ic+'<span>Verbinde\u2026</span></button>';
+  } else {
+    html='<button class="btn drive-btn drive-off reveal d3" onclick="cloudConnect(true)">'+ic+'<span>Mit Google Drive verbinden</span></button>';
+  }
+  return html+(cloudStatus?'<div class="drive-status">'+esc(cloudStatus)+'</div>':'');
+}
+
+/* ---------- Objektauswahl: neues Objekt + Objektliste ---------- */
+function renderObjekte(){
   const n=state.objekte.length, k=kpis();
   const detail = n
     ? n+' Objekt'+(n>1?'e':'')+' \u00b7 '+k.einheiten+' Einheit'+(k.einheiten!==1?'en':'')+' \u00b7 '+k.belegt+' vermietet'
     : 'Bereit f\u00fcr Ihr erstes Objekt';
-
-  let head='<div class="kopf">'+logoHTML(0.74)
-    +'<div class="label">Objektverwaltung</div>'
-    +'<div class="detailzeile">'+detail+'</div></div>';
-
-  // Objektauswahl
-  let objsel;
+  const head=kopf('Objektauswahl','Objekte',0.55)
+    +'<div class="detailzeile reveal" style="text-align:center;margin:-14px 0 18px">'+detail+'</div>';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  let body;
   if(n===0){
-    objsel='<div class="empty reveal d1">'
-      +'<div class="es-ic">\uD83C\uDFE0</div>'
-      +'<h3>Hier beginnt Ihre Verwaltung</h3>'
+    body='<div class="empty reveal d1"><div class="es-ic">\uD83C\uDFE0</div><h3>Hier beginnt Ihre Verwaltung</h3>'
       +'<p>Legen Sie Ihr erstes Objekt an \u2013 Haus, Wohnung oder Eigentum. Danach \u00f6ffnen Sie es per Klick und arbeiten in der Akte weiter.</p>'
-      +'<div class="es-actions">'
-      +'<button class="btn btn-blue btn-sm" onclick="openObjektModal()">'+iconPlusBlue()+' Objekt anlegen</button>'
-      +'<button class="btn btn-ghost btn-sm" onclick="loadBeispiel()">Beispielobjekt</button>'
-      +'</div></div>';
+      +'<div class="es-actions"><button class="btn btn-blue btn-sm" onclick="openObjektModal()">'+iconPlusBlue()+' Objekt anlegen</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="loadBeispiel()">Beispielobjekt</button></div></div>';
   } else {
-    objsel='<div class="sec-label reveal"><span>Objekt w\u00e4hlen</span><span>'+n+'</span></div>'
-      +'<div class="reveal d1">'
+    body='<div class="sec-label reveal"><span>Objekt w\u00e4hlen</span><span>'+n+'</span></div><div class="reveal d1">'
       +'<button class="tile add" onclick="openObjektModal()"><span class="ic">'+svgWrapC(I.plus)+'</span><span class="txt"><span class="t">Neues Objekt anlegen</span></span></button>'
-      +state.objekte.map(objTile).join('')
-      +'</div>';
+      +state.objekte.map(objTile).join('')+'</div>';
   }
+  return head+body+back;
+}
 
-  // Verwaltung (weitere Module)
-  const verw='<div class="sec-label reveal d2"><span>Verwaltung</span></div><div class="reveal d2">'
+/* ---------- Verwaltung: alle Module (durchgehend blaue Kacheln) ---------- */
+function renderVerwaltung(){
+  const verw='<div class="reveal d1">'
     +navTile(I.kasse,'Kasse','Einnahmen, Forderungen, Mahnungen','kasse',true)
     +navTile(I.nk,'Nebenkostenabrechnung','Abrechnung nach Ihrer Vorlage','nk',true)
     +navTile(I.weg,'Eigentum & R\u00fccklagen','WEG, Erhaltungsr\u00fccklage','weg',true)
@@ -578,11 +662,8 @@ function renderHome(){
     +navTile(I.recht,'Rechtsgrundlagen','BGB, BetrKV, HeizkostenV, WEG','recht',true)
     +navTile(I.stamm,'Stammdaten & Sicherung','Verwalterdaten, Daten sichern','stamm',true)
     +'</div>';
-
-  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v1 (Stufe 1)<br>'
-    +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
-
-  return head+objsel+verw+foot;
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  return kopf('Verwaltung','Module',0.55)+verw+back;
 }
 function iconPlusBlue(){ return '<svg viewBox="0 0 32 32" fill="none" style="width:16px;height:16px"><path d="M16 6v20M6 16h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'; }
 function svgWrapC(p){ return '<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">'+p.replace(/white/g,'currentColor')+'</svg>'; }
@@ -629,7 +710,7 @@ function renderDetail(){
     +einheitenCard(o)
     +(o.art==='weg'?wegCard(o):'')
     +dokumenteCard(o)
-    +'<div class="center reveal d1"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+    +'<div class="center reveal d1"><button class="btn btn-red" onclick="go(\'objekte\')">\u2190 Zur\u00fcck</button></div>';
 }
 function row(k,v){ return '<div class="row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; }
 
@@ -718,7 +799,7 @@ function renderStamm(){
     +'<button class="btn btn-ghost" onclick="document.getElementById(\'importFile\').click()">Sicherung einspielen</button>'
     +'<button class="btn btn-ghost" style="color:var(--accent-red-light);border-color:rgba(196,30,30,0.4)" onclick="wipe()">Alle Daten l\u00f6schen</button>'
     +'</div></div>'
-    +'<div class="center reveal d1"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+    +'<div class="center reveal d1"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
 }
 
 /* ---------- „Bald"-Module ---------- */
@@ -731,7 +812,7 @@ function renderSoon(v){
   const m=map[v]||{t:'Modul',l:'',d:'In Arbeit.'};
   return kopf(m.t,m.l,0.55)
     +'<div class="notice reveal"><b>Dieses Modul ist in Vorbereitung</b><p>'+m.d+'</p></div>'
-    +'<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+    +'<div class="center reveal"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
 }
 
 /* ============================================================
@@ -859,10 +940,10 @@ function nf(label,group,key,val,unit){
     +'<input type="text" inputmode="decimal" value="'+v+'" oninput="nkSet(\''+group+'\','+(key==null?'null':"'"+key+"'")+',this.value)"></div>';
 }
 function renderNk(){
-  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
   if(state.objekte.length===0)
     return kopf('Nebenkostenabrechnung','Abrechnung',0.55)
-      +'<div class="empty reveal"><div class="es-ic">\uD83E\uDDFE</div><h3>Noch kein Objekt</h3><p>Legen Sie zuerst ein Objekt mit Einheiten an \u2013 die Abrechnung greift dann auf Fl\u00e4chen und Mieter zu.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'home\')">Zur Objektverwaltung</button></div></div>'+back;
+      +'<div class="empty reveal"><div class="es-ic">\uD83E\uDDFE</div><h3>Noch kein Objekt</h3><p>Legen Sie zuerst ein Objekt mit Einheiten an \u2013 die Abrechnung greift dann auf Fl\u00e4chen und Mieter zu.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'objekte\')">Zur Objektverwaltung</button></div></div>'+back;
   if(!nkObjId||!_o(nkObjId)) nkObjId=state.objekte[0].id;
   if(!nkJahr) nkJahr=String(new Date().getFullYear()-1);
   const o=_o(nkObjId); nkEnsure(o);
@@ -1010,7 +1091,7 @@ function rechtListHtml(){
   return items.map(r=>'<div class="recht-item"><div class="ref">'+r.ref+'</div><div class="ti">'+esc(r.titel)+'</div><p>'+esc(r.text)+'</p><div class="tags">'+esc(r.tags)+'</div></div>').join('');
 }
 function renderRecht(){
-  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
   const tabs='<div class="recht-tabs reveal">'+Object.keys(RECHT_KAT).map(k=>'<button class="'+(rechtKat===k?'on':'')+'" onclick="rechtTab(\''+k+'\')">'+RECHT_KAT[k]+'</button>').join('')+'</div>';
   const such='<div class="card reveal"><div class="field" style="margin:0"><label>Suche</label><input type="text" placeholder="Stichwort, z. B. Kaution, Frist, \u00a7 558" oninput="rechtSearch(this.value)" value="'+esc(rechtQuery)+'"></div></div>';
   const disc='<div class="disc reveal">Eigene, neutrale Kurzfassungen der genannten Vorschriften \u2013 Orientierungshilfe, keine Rechtsberatung. F\u00fcr gepr\u00fcfte Muster und Einzelf\u00e4lle: Haus & Grund (Vermieterseite) bzw. Deutscher Mieterbund (Mieterseite) oder anwaltliche Beratung.</div>';
@@ -1118,10 +1199,10 @@ const FORMBLATT=[
    build:ctx=>({typ:'brief',betreff:ctx.f.betreff||'Mitteilung',text:'Sehr geehrte/r '+(ctx.emp.name||'Mieter/in')+',\n\n'+(ctx.f.text||'')+FB_SIG})}
 ];
 function renderFormulare(){
-  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
   if(state.objekte.length===0)
     return kopf('Formular-Bibliothek','Vorlagen',0.55)
-      +'<div class="empty reveal"><div class="es-ic">\uD83D\uDCC4</div><h3>Noch kein Objekt</h3><p>Legen Sie ein Objekt mit Mieter an \u2013 dann f\u00fcllen die Formulare Person und Wohnung automatisch aus.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'home\')">Zur Objektverwaltung</button></div></div>'+back;
+      +'<div class="empty reveal"><div class="es-ic">\uD83D\uDCC4</div><h3>Noch kein Objekt</h3><p>Legen Sie ein Objekt mit Mieter an \u2013 dann f\u00fcllen die Formulare Person und Wohnung automatisch aus.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'objekte\')">Zur Objektverwaltung</button></div></div>'+back;
   const grps=['A. Vermietung / Vertragsbeginn','B. \u00dcbergabe / Einzug','C. Laufendes Mietverh\u00e4ltnis','D. Auszug / Beendigung','Allgemein'];
   let body='';
   grps.forEach(gr=>{ const items=FORMBLATT.filter(f=>f.grp===gr); if(!items.length)return;
@@ -1246,7 +1327,7 @@ function kasseSetJahr(v){ const j=(v||'').trim(); if(j) kasseJahr=j; render(); }
 
 function renderKasse(){
   kasseEnsure();
-  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
   if(!kasseJahr) kasseJahr=String(new Date().getFullYear());
   const Y=parseInt(kasseJahr)||new Date().getFullYear();
   const objOpts='<option value="">Alle Objekte</option>'+state.objekte.map(o=>'<option value="'+o.id+'"'+(kasseObjFilter===o.id?' selected':'')+'>'+esc(o.bezeichnung)+'</option>').join('');
@@ -1404,7 +1485,7 @@ function wegPick(v){ wegObjId=v; selId=null; render(); }
 function wegSet(objId,key,val){ const o=_o(objId); if(!o)return; if(key==='mea')o.mea=val; else if(key==='hausgeld')o.hausgeld=val; o.geaendert=Date.now(); save(); }
 
 function renderWeg(){
-  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'verwaltung\')">\u2190 Zur\u00fcck</button></div>';
   const wegList=state.objekte.filter(o=>o.art==='weg');
   if(wegList.length===0)
     return kopf('Eigentum & R\u00fccklagen','WEG',0.55)
@@ -1776,7 +1857,7 @@ function saveObjekt(id){
     state.objekte.push({id:uid(),...data,einheiten,dokumente:[],ruecklage:art==='weg'?{stand:0,bewegungen:[]}:null,mea:null});
   }
   save(); closeModal();
-  if(view==='home') render(); else go(id?'detail':'home', id||null);
+  if(view==='objekte'||view==='detail') render(); else go('objekte');
 }
 function deleteObjekt(id){
   const o=state.objekte.find(x=>x.id===id);
@@ -1785,7 +1866,7 @@ function deleteObjekt(id){
   document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button><button class="btn btn-red" onclick="confirmDelete(\''+id+'\')">Endg\u00fcltig l\u00f6schen</button>';
   openModal();
 }
-function confirmDelete(id){ state.objekte=state.objekte.filter(x=>x.id!==id); save(); closeModal(); go('home'); }
+function confirmDelete(id){ state.objekte=state.objekte.filter(x=>x.id!==id); save(); closeModal(); go('objekte'); }
 
 /* ---------- Beispielobjekt ---------- */
 function loadBeispiel(){
