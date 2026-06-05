@@ -337,6 +337,19 @@ body::before{
 .proto-piclbl{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .proto-piclbl input{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
 .pr-msg{font-size:12px;color:var(--accent-blue);margin-top:7px;min-height:14px;font-family:'Source Sans 3',sans-serif}
+.keys-list{display:flex;flex-direction:column;gap:6px}
+.key-row{display:flex;align-items:center;gap:10px;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:8px 10px}
+.key-row.on{border-color:var(--accent-blue);background:rgba(30,136,229,.08)}
+.key-main{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;margin:0;min-width:0}
+.key-cb{width:18px;height:18px;accent-color:var(--accent-blue);flex:none}
+.key-name{font-size:13.5px;color:var(--text-secondary);font-family:'Source Sans 3',sans-serif}
+.key-anz{width:62px;box-sizing:border-box;padding:7px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-white);font-size:13px;text-align:center;font-family:'Source Sans 3',sans-serif;flex:none}
+.key-anz:disabled{opacity:.38}
+.anno-pal{display:flex;gap:10px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
+.anno-col{width:30px;height:30px;border-radius:50%;border:2px solid var(--border-color);cursor:pointer;padding:0}
+.anno-col.on{border-color:#fff;box-shadow:0 0 0 2px var(--accent-blue)}
+.anno-wrap{width:100%;background:#000;border-radius:var(--radius-sm);overflow:hidden;display:flex;justify-content:center}
+.anno-canvas{display:block;max-width:100%;max-height:58vh;width:auto;height:auto;touch-action:none;cursor:crosshair;background:#000}
 .sigpad{width:100%;height:170px;background:#fff;border:1px solid var(--border-color);border-radius:var(--radius-sm);touch-action:none;display:block;margin-top:6px}
 .sighint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic;font-family:'Source Sans 3',sans-serif}
 .sig-slots{display:flex;gap:12px;margin-top:6px}
@@ -470,6 +483,7 @@ let state={ objekte:[], einstellungen:{version:'1.0'} };
 let view='home', selId=null;
 /* Protokoll-Modul (Uebergabe/Abnahme): Arbeitsstand + Auswahl */
 let proto=null, protoSelObj=null, protoSelEinheit=null, protoPhotoTarget=-1, sigCtx=null, sigDrawing=false, sigRole=null, sigHasInk=false;
+let annoRoom=-1, annoIdx=-1, annoColor='#e23b2e', annoCtx=null, annoCanvas=null, annoImg=null, annoDrawing=false;
 const PROTO_CHECKS=['W\u00e4nde / Decke','Boden / Belag','Fenster','T\u00fcren','Heizung / Heizk\u00f6rper','Elektro (Schalter, Steckdosen)','Beleuchtung'];
 const PROTO_CHECKS_NASS=['Fliesen / Silikon','Armaturen / Sanit\u00e4r','Be- und Entl\u00fcftung'];
 /* Ausfuehrliche Zustandstexte je Position (statt Kuerzel i.O./Mangel/n.v.) */
@@ -481,6 +495,25 @@ function protoOpts(label){
   if(label==='Boden / Belag') return PROTO_OPTS_BODEN;
   return PROTO_OPTS_STD;
 }
+/* Schluesseluebergabe: feste Liste zum Antippen + Stueckzahl */
+const PROTO_KEYS=['Haust\u00fcrschl\u00fcssel','Wohnungst\u00fcrschl\u00fcssel','Briefkastenschl\u00fcssel','Kellerschl\u00fcssel','Garagen-/Tiefgaragenschl\u00fcssel','Schlie\u00dfanlage / Transponder','Garten-/Hoft\u00fcrschl\u00fcssel','Sonstiger Schl\u00fcssel'];
+function protoEnsureKeys(){
+  if(!proto) return;
+  if(!Array.isArray(proto.keys)){ proto.keys=PROTO_KEYS.map(n=>({name:n,aktiv:false,anzahl:1})); if(typeof proto.schluessel==='string' && proto.schluessel.trim() && !proto.keysNote) proto.keysNote=proto.schluessel; }
+  if(proto.keysNote==null) proto.keysNote='';
+}
+function protoKeysHtml(){
+  return (proto.keys||[]).map((k,idx)=>
+    '<div class="key-row'+(k.aktiv?' on':'')+'">'
+    +'<label class="key-main"><input type="checkbox" class="key-cb" '+(k.aktiv?'checked':'')+' onchange="protoKeyToggle('+idx+',this.checked)"><span class="key-name">'+esc(k.name)+'</span></label>'
+    +'<input type="number" class="key-anz" min="0" inputmode="numeric" value="'+(k.anzahl!=null?k.anzahl:1)+'" '+(k.aktiv?'':'disabled')+' oninput="protoKeyAnz('+idx+',this.value)" aria-label="St\u00fcckzahl">'
+    +'</div>').join('');
+}
+function protoKeyToggle(i,on){ const k=proto&&proto.keys&&proto.keys[i]; if(!k)return; k.aktiv=!!on; if(on&&(!k.anzahl||k.anzahl<1))k.anzahl=1; protoSaveDraft(); protoRenderKeys(); }
+function protoKeyAnz(i,v){ const k=proto&&proto.keys&&proto.keys[i]; if(!k)return; const n=parseInt(v,10); k.anzahl=isNaN(n)?0:Math.max(0,n); protoSaveDraft(); }
+function protoRenderKeys(){ const el=document.getElementById('keysList'); if(el) el.innerHTML=protoKeysHtml(); }
+function protoKeysActive(){ return (proto&&proto.keys||[]).filter(k=>k.aktiv&&Number(k.anzahl)>0); }
+function protoKeysSummary(){ return protoKeysActive().map(k=>k.name+': '+k.anzahl).join('\n'); }
 const ART={ einzel:'Einzelimmobilie', mfh:'Mehrfamilienhaus', weg:'WEG-Eigentum', eigen:'Eigennutzung' };
 async function save(){ state.updatedAt=Date.now(); await Store.set(state); cloudPushDebounced(); }
 
@@ -704,7 +737,7 @@ const ICON_CAM='<path d="M4 11.5a2 2 0 012-2h2.2l1.5-2.4a1.5 1.5 0 011.3-.7h6a1.
 
 /* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
-  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v3 (Foto-Update)<br>'
+  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v4 (Markierung + Schl\u00fcsselliste)<br>'
     +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
   return '<div class="home-logo reveal">'+logoHTML(1.2)+'</div>'
     + '<div class="home-block">'
@@ -838,7 +871,7 @@ function protoStart(mode){
   const akt=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
   proto={ id:uid(), mode, objektId:o.id, einheitId:e?e.id:null, einheitName:e?e.bezeichnung:'\u2014',
     mieter:(akt&&akt.mieter)||'', datum:new Date().toISOString().slice(0,10),
-    zaehler:{strom:'',gas:'',wasser:'',heizung:''}, schluessel:'', bemerkung:'',
+    zaehler:{strom:'',gas:'',wasser:'',heizung:''}, schluessel:'', keys:PROTO_KEYS.map(n=>({name:n,aktiv:false,anzahl:1})), keysNote:'', bemerkung:'',
     sigVermieter:null, sigMieter:null, sigOrt:(o.ort||''), empfaengerMail:'',
     raeume:protoDefaultRooms(e) };
   protoSaveDraft(); render();
@@ -846,6 +879,7 @@ function protoStart(mode){
 
 function protoZField(label,key){ return '<div class="field"><label>'+label+'</label><input value="'+esc(proto.zaehler[key]||'')+'" oninput="protoZ(\''+key+'\',this.value)" placeholder="Stand"></div>'; }
 function protoEditorHtml(){
+  protoEnsureKeys();
   const p=proto, o=_o(p.objektId)||{};
   let h='<div class="card reveal"><h3>Eckdaten</h3>'
     +'<div class="kv"><div class="row"><span class="k">Objekt</span><span class="v">'+esc(o.bezeichnung||'\u2014')+'</span></div>'
@@ -854,7 +888,10 @@ function protoEditorHtml(){
     +'<div class="row2"><div class="field"><label>Datum</label><input type="date" value="'+esc(p.datum)+'" oninput="protoSet(\'datum\',this.value)"></div>'
     +'<div class="field"><label>Vorgang</label><input value="'+(p.mode==='einzug'?'Einzug':'Auszug')+'" disabled></div></div></div>';
   h+='<div class="card reveal"><h3>Z\u00e4hlerst\u00e4nde</h3><div class="row2">'+protoZField('Strom','strom')+protoZField('Gas','gas')+'</div><div class="row2">'+protoZField('Wasser','wasser')+protoZField('Heizung','heizung')+'</div></div>';
-  h+='<div class="card reveal"><h3>Schl\u00fcssel</h3><div class="field"><label>\u00dcbergebene Schl\u00fcssel (Art + Anzahl)</label><textarea oninput="protoSet(\'schluessel\',this.value)" placeholder="z. B. Haust\u00fcr 2, Wohnung 2, Briefkasten 1, Keller 1">'+esc(p.schluessel)+'</textarea></div></div>';
+  h+='<div class="card reveal"><h3>Schl\u00fcssel\u00fcbergabe</h3>'
+    +'<p class="hint" style="margin-bottom:8px">Schl\u00fcssel antippen und St\u00fcckzahl eintragen \u2013 nur aktivierte Schl\u00fcssel erscheinen im Protokoll.</p>'
+    +'<div class="keys-list" id="keysList">'+protoKeysHtml()+'</div>'
+    +'<div class="field" style="margin-top:10px"><label>Weitere Schl\u00fcssel / Bemerkung</label><input value="'+esc(p.keysNote||'')+'" oninput="protoSet(\'keysNote\',this.value)" placeholder="frei (optional)"></div></div>';
   h+='<div class="sec-label reveal"><span>R\u00e4ume / Zustand</span><span>'+p.raeume.length+'</span></div>';
   h+='<div id="protoRaeume">'+p.raeume.map((r,i)=>protoRoomHtml(r,i)).join('')+'</div>';
   h+='<button class="btn btn-blue btn-sm" style="margin-bottom:16px" onclick="protoAddRoom()">+ Raum hinzuf\u00fcgen</button>';
@@ -902,8 +939,53 @@ function protoPhotoView(i,k){
   const r=proto&&proto.raeume[i]; const f=r&&r.fotos&&r.fotos[k]; if(!f) return;
   document.getElementById('mTitle').textContent=(r.name||'Raum')+' \u2013 Foto '+(k+1)+' von '+r.fotos.length;
   document.getElementById('mBody').innerHTML='<img class="proto-lightbox" src="'+f.data+'" alt="">';
-  document.getElementById('mFoot').innerHTML='<button class="btn btn-red btn-sm" onclick="protoRemovePhoto('+i+','+k+');closeModal()">Foto l\u00f6schen</button><button class="btn btn-blue btn-sm" onclick="closeModal()">Schlie\u00dfen</button>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost btn-sm" onclick="protoRemovePhoto('+i+','+k+');closeModal()">Foto l\u00f6schen</button><button class="btn btn-blue btn-sm" onclick="protoAnnoOpen('+i+','+k+')">Markieren</button><button class="btn btn-blue btn-sm" onclick="closeModal()">Schlie\u00dfen</button>';
   openModal();
+}
+/* ----- Foto markieren (farbig zeichnen) ----- */
+function protoAnnoOpen(i,k){
+  const f=proto&&proto.raeume[i]&&proto.raeume[i].fotos&&proto.raeume[i].fotos[k]; if(!f) return;
+  annoRoom=i; annoIdx=k; annoColor='#e23b2e'; annoCtx=null; annoImg=null; annoDrawing=false;
+  const colors=['#e23b2e','#f1c40f','#27ae60','#2d9cdb','#ffffff','#111111'];
+  const pal=colors.map((c,n)=>'<button class="anno-col'+(n===0?' on':'')+'" style="background:'+c+'" onclick="protoAnnoColor(\''+c+'\',this)"></button>').join('');
+  document.getElementById('mTitle').textContent='Foto markieren';
+  document.getElementById('mBody').innerHTML='<div class="anno-pal">'+pal+'</div><div class="anno-wrap"><canvas id="annoCanvas" class="anno-canvas"></canvas></div><div class="sighint">Farbe oben w\u00e4hlen, dann mit Finger/Stift direkt auf dem Foto markieren.</div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost btn-sm" onclick="protoAnnoReset()">Zur\u00fccksetzen</button><button class="btn btn-red btn-sm" onclick="protoAnnoCancel()">Abbrechen</button><button class="btn btn-blue btn-sm" onclick="protoAnnoSave()">Speichern</button>';
+  openModal(); setTimeout(protoAnnoInit,60);
+}
+function protoAnnoInit(){
+  annoCanvas=document.getElementById('annoCanvas'); if(!annoCanvas) return;
+  const r=proto&&proto.raeume[annoRoom]; const f=r&&r.fotos&&r.fotos[annoIdx]; if(!f) return;
+  const src=f.orig||f.data;
+  const img=new Image();
+  img.onload=()=>{
+    let w=img.naturalWidth||img.width||1000, h=img.naturalHeight||img.height||750; const max=1280;
+    if(w>h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+    annoCanvas.width=w; annoCanvas.height=h;
+    const ctx=annoCanvas.getContext('2d'); if(!ctx) return; ctx.drawImage(img,0,0,w,h);
+    annoCtx=ctx; annoImg=img;
+    const sw=()=>Math.max(3,Math.round(annoCanvas.width/110));
+    const pos=ev=>{ const r=annoCanvas.getBoundingClientRect(); const p=(ev.touches&&ev.touches[0])?ev.touches[0]:ev; return {x:(p.clientX-r.left)*(annoCanvas.width/(r.width||1)), y:(p.clientY-r.top)*(annoCanvas.height/(r.height||1))}; };
+    const down=ev=>{ ev.preventDefault(); annoDrawing=true; const q=pos(ev); ctx.strokeStyle=annoColor; ctx.lineWidth=sw(); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+0.1,q.y+0.1); ctx.stroke(); };
+    const move=ev=>{ if(!annoDrawing) return; ev.preventDefault(); const q=pos(ev); ctx.lineTo(q.x,q.y); ctx.stroke(); };
+    const up=()=>{ annoDrawing=false; };
+    annoCanvas.addEventListener('pointerdown',down); annoCanvas.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
+    annoCanvas.addEventListener('touchstart',down,{passive:false}); annoCanvas.addEventListener('touchmove',move,{passive:false}); annoCanvas.addEventListener('touchend',up);
+  };
+  img.onerror=()=>{};
+  img.src=src;
+}
+function protoAnnoColor(c,btn){ annoColor=c; const all=document.querySelectorAll('.anno-col'); for(let n=0;n<all.length;n++) all[n].classList.remove('on'); if(btn) btn.classList.add('on'); if(annoCtx) annoCtx.strokeStyle=c; }
+function protoAnnoReset(){ if(annoCtx&&annoImg&&annoCanvas){ annoCtx.clearRect(0,0,annoCanvas.width,annoCanvas.height); annoCtx.drawImage(annoImg,0,0,annoCanvas.width,annoCanvas.height); } }
+function protoAnnoCancel(){ annoRoom=-1; annoIdx=-1; closeModal(); }
+function protoAnnoSave(){
+  if(!annoCanvas || annoRoom<0){ closeModal(); return; }
+  const f=proto.raeume[annoRoom] && proto.raeume[annoRoom].fotos[annoIdx]; if(!f){ closeModal(); return; }
+  if(!f.orig) f.orig=f.data; // Original fuer erneutes Bearbeiten sichern
+  let data=''; try{ data=annoCanvas.toDataURL('image/jpeg',0.7); }catch(e){ data=''; }
+  if(data){ f.data=data; f.w=annoCanvas.width; f.h=annoCanvas.height; }
+  const i=annoRoom; annoRoom=-1; annoIdx=-1;
+  protoSaveDraftNow(); closeModal(); protoRenderFotos(i);
 }
 function protoSet(k,v){ if(proto){ proto[k]=v; protoSaveDraft(); } }
 function protoZ(k,v){ if(proto){ proto.zaehler[k]=v; protoSaveDraft(); } }
@@ -976,8 +1058,17 @@ function protoBuildDoc(){
     head:[['Strom','Gas','Wasser','Heizung']],body:[[p.zaehler.strom||'\u2014',p.zaehler.gas||'\u2014',p.zaehler.wasser||'\u2014',p.zaehler.heizung||'\u2014']],
     headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontSize:9},styles:{font:'helvetica',fontSize:9,cellPadding:2,lineColor:[224,224,224],lineWidth:0.15}});
   y=doc.lastAutoTable.finalY+6;
-  if((p.schluessel||'').trim()){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); need(14); doc.text('Schl\u00fcssel',ML,y); y+=2;
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(40,40,40); const L=doc.splitTextToSize(p.schluessel,contentW); need(L.length*5+4); doc.text(L,ML,y+4); y+=L.length*5+8; }
+  const _kact=protoKeysActive(); const _knote=(p.keysNote||'').trim();
+  if(_kact.length || _knote){
+    need(18); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); doc.text('Schl\u00fcssel\u00fcbergabe',ML,y);
+    if(_kact.length){
+      doc.autoTable({startY:y+2,margin:{left:ML,right:MR},theme:'grid',
+        head:[['Schl\u00fcssel','Anzahl']], body:_kact.map(k=>[k.name,String(k.anzahl)]),
+        headStyles:{fillColor:[45,52,54],textColor:[255,255,255],fontSize:9}, styles:{font:'helvetica',fontSize:9,cellPadding:2,lineColor:[224,224,224],lineWidth:0.15}, columnStyles:{1:{cellWidth:26,halign:'center'}}});
+      y=doc.lastAutoTable.finalY+(_knote?3:6);
+    } else { y+=6; }
+    if(_knote){ doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(40,40,40); const L=doc.splitTextToSize('Weitere: '+_knote,contentW); need(L.length*5+4); doc.text(L,ML,y+2); y+=L.length*5+6; }
+  }
   (p.raeume||[]).forEach(r=>{
     need(26);
     doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(17,17,17); doc.text(r.name||'Raum',ML,y+3); y+=5;
