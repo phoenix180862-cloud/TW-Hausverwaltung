@@ -312,6 +312,33 @@ body::before{
 .wiz-uhead{display:flex;align-items:center;justify-content:space-between;font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.5px;font-size:12.5px;color:var(--accent-blue);margin-bottom:10px}
 .wiz-rm{background:none;border:none;color:var(--accent-red-light);font-size:11px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:2px 4px}
 .wiz-sub{font-size:11px;color:var(--text-muted);font-style:italic;margin:12px 0 8px;font-family:'Source Sans 3',sans-serif}
+
+/* ===== Protokoll-Editor (Uebergabe/Abnahme) ===== */
+.proto-pick{display:flex;flex-direction:column;gap:12px}
+.proto-room{padding:14px}
+.pr-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.pr-name{flex:1;box-sizing:border-box;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-white);font-family:'Oswald',sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.5px;outline:none}
+.pr-name:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(30,136,229,.12)}
+.proto-items{display:flex;flex-direction:column}
+.proto-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color)}
+.proto-item:last-child{border-bottom:none}
+.pi-l{flex:1;font-size:13px;color:var(--text-secondary);font-family:'Source Sans 3',sans-serif}
+.pi-z{width:100px;box-sizing:border-box;padding:6px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-white);font-size:12.5px;font-family:'Source Sans 3',sans-serif;outline:none}
+.pr-fotos-h{font-family:'Oswald',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-light);margin:14px 0 8px}
+.pr-fotos-h .pr-hint{color:var(--text-muted);font-size:10.5px;text-transform:none;letter-spacing:0;font-family:'Source Sans 3',sans-serif}
+.proto-fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.pr-foto{position:relative;aspect-ratio:4/3;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border-color);background:var(--bg-primary)}
+.pr-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.pr-fx{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(196,30,30,.92);color:#fff;font-size:11px;cursor:pointer;line-height:1;padding:0}
+.pr-nofoto{grid-column:1/-1;color:var(--text-muted);font-size:12px;font-style:italic;padding:4px 0;font-family:'Source Sans 3',sans-serif}
+.sigpad{width:100%;height:170px;background:#fff;border:1px solid var(--border-color);border-radius:var(--radius-sm);touch-action:none;display:block;margin-top:6px}
+.sighint{font-size:11px;color:var(--text-muted);margin-top:6px;font-style:italic;font-family:'Source Sans 3',sans-serif}
+.sig-slots{display:flex;gap:12px;margin-top:6px}
+.sig-slot{flex:1;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:10px;text-align:center}
+.sig-role{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:8px}
+.sig-thumb{width:100%;height:54px;object-fit:contain;background:#fff;border-radius:4px;margin-bottom:8px;display:block}
+.proto-status{min-height:18px;font-size:12.5px;color:var(--accent-blue);text-align:center;margin:10px 0 4px;font-family:'Source Sans 3',sans-serif}
+.proto-actions2{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -326,6 +353,7 @@ body::before{
   </div>
 </div>
 <input type="file" id="importFile" accept="application/json" style="display:none">
+<input type="file" id="protoFile" accept="image/*" multiple style="display:none">
 
 <script>
 /* ============================================================
@@ -433,6 +461,11 @@ const Store={
 /* ---------- State ---------- */
 let state={ objekte:[], einstellungen:{version:'1.0'} };
 let view='home', selId=null;
+/* Protokoll-Modul (Uebergabe/Abnahme): Arbeitsstand + Auswahl */
+let proto=null, protoSelObj=null, protoSelEinheit=null, protoPhotoTarget=-1, sigCtx=null, sigDrawing=false, sigRole=null, sigHasInk=false;
+const PROTO_CHECKS=['W\u00e4nde / Decke','Boden / Belag','Fenster','T\u00fcren','Heizung / Heizk\u00f6rper','Elektro (Schalter, Steckdosen)','Beleuchtung'];
+const PROTO_CHECKS_NASS=['Fliesen / Silikon','Armaturen / Sanit\u00e4r','Be- und Entl\u00fcftung'];
+const PROTO_ZUSTAND=['i.O.','Mangel','n.v.'];
 const ART={ einzel:'Einzelimmobilie', mfh:'Mehrfamilienhaus', weg:'WEG-Eigentum', eigen:'Eigennutzung' };
 async function save(){ state.updatedAt=Date.now(); await Store.set(state); cloudPushDebounced(); }
 
@@ -457,7 +490,7 @@ function cloudGetToken(interactive){
     try{
       const tc=google.accounts.oauth2.initTokenClient({
         client_id:cloudCfg.clientId,
-        scope:'https://www.googleapis.com/auth/drive.file',
+        scope:'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.send',
         callback:resp=>{ if(resp&&resp.access_token){ cloudToken=resp.access_token; cloudTokenExp=Date.now()+(Number(resp.expires_in||3600)*1000); resolve(cloudToken); } else reject(new Error('Keine Berechtigung erhalten.')); },
         error_callback:err=>reject(new Error('OAuth-Fehler ('+((err&&err.type)||'?')+'). Ist '+location.origin+' als autorisierte JavaScript-Quelle in der Google Cloud Console eingetragen?'))
       });
@@ -497,6 +530,33 @@ async function cloudEnsureFile(){
 }
 async function cloudDownload(){ const r=await cloudFetch('https://www.googleapis.com/drive/v3/files/'+cloudCfg.fileId+'?alt=media'); const t=await r.text(); try{ return JSON.parse(t); }catch(e){ return null; } }
 async function cloudUpload(){ await cloudFetch('https://www.googleapis.com/upload/drive/v3/files/'+cloudCfg.fileId+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}); }
+/* Dauerhafte Ablage: PDF-Protokolle in Unterordner "Protokolle" der TW-Hausverwaltung */
+async function cloudEnsureFolder(){
+  await cloudGetToken(false);
+  if(!cloudCfg.folderId){
+    const q="name='TW Hausverwaltung' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    const d=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)&spaces=drive')).json();
+    if(d.files&&d.files[0]) cloudCfg.folderId=d.files[0].id;
+    else { const c=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'TW Hausverwaltung',mimeType:'application/vnd.google-apps.folder'})})).json(); cloudCfg.folderId=c.id; }
+    cloudCfgSave();
+  }
+  if(!cloudCfg.protoFolderId){
+    const q="'"+cloudCfg.folderId+"' in parents and name='Protokolle' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    const d=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name)&spaces=drive')).json();
+    if(d.files&&d.files[0]) cloudCfg.protoFolderId=d.files[0].id;
+    else { const c=await (await cloudFetch('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Protokolle',mimeType:'application/vnd.google-apps.folder',parents:[cloudCfg.folderId]})})).json(); cloudCfg.protoFolderId=c.id; }
+    cloudCfgSave();
+  }
+}
+async function cloudUploadPdf(blob,filename){
+  await cloudEnsureFolder();
+  const meta={name:filename,mimeType:'application/pdf',parents:[cloudCfg.protoFolderId]};
+  const form=new FormData();
+  form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('file',blob);
+  const r=await cloudFetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{method:'POST',body:form});
+  return await r.json();
+}
 async function cloudPull(){
   const remote=await cloudDownload();
   if(remote&&remote.objekte){
@@ -592,9 +652,11 @@ function render(){
   else if(view==='kasse') el.innerHTML=renderKasse();
   else if(view==='recht') el.innerHTML=renderRecht();
   else if(view==='formulare') el.innerHTML=renderFormulare();
+  else if(view==='uebergabe') el.innerHTML=renderUebergabe();
+  else if(view==='abnahme') el.innerHTML=renderAbnahme();
   else el.innerHTML=renderSoon(view);
-  // Print-FAB nur in Arbeitsmodulen, nicht auf den Navigations-Startseiten
-  const hub=(view==='home'||view==='objekte'||view==='verwaltung');
+  // Print-FAB nur in Arbeitsmodulen, nicht auf Navigations-/Protokoll-Seiten
+  const hub=(view==='home'||view==='objekte'||view==='verwaltung'||view==='uebergabe'||view==='abnahme');
   const fab=document.getElementById('printFab'); if(fab) fab.style.display=hub?'none':'flex';
   // Live-Uhr nur auf der Startseite laufen lassen
   if(view==='home') startClock(); else stopClock();
@@ -621,6 +683,8 @@ function stopClock(){ if(clockTimer){ clearInterval(clockTimer); clockTimer=null
 /* ---------- Icons fuer Startseiten-Buttons ---------- */
 const ICON_MODULE='<rect x="5" y="5" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="18" y="5" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="5" y="18" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/><rect x="18" y="18" width="9" height="9" rx="1.5" stroke="white" stroke-width="2" fill="none"/>';
 const ICON_DRIVE='<path d="M8 22h15a5 5 0 100-10 7 7 0 00-13.5 1.5A4.5 4.5 0 008 22z" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
+const ICON_EINZUG='<rect x="17" y="5" width="9" height="22" rx="1" stroke="white" stroke-width="2" fill="none"/><path d="M4 16h13M11 11l6 5-6 5" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
+const ICON_AUSZUG='<rect x="6" y="5" width="9" height="22" rx="1" stroke="white" stroke-width="2" fill="none"/><path d="M28 16H15M22 11l6 5-6 5" stroke="white" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>';
 
 /* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
@@ -683,6 +747,8 @@ function renderObjekte(){
 /* ---------- Verwaltung: alle Module (durchgehend blaue Kacheln) ---------- */
 function renderVerwaltung(){
   const verw='<div class="reveal d1">'
+    +navTile(ICON_EINZUG,'Wohnungs\u00fcbergabe','Einzug \u2013 Protokoll mit Fotos je Raum','uebergabe',true)
+    +navTile(ICON_AUSZUG,'Wohnungsabnahme','Auszug \u2013 Protokoll mit Fotos je Raum','abnahme',true)
     +navTile(I.kasse,'Kasse','Einnahmen, Forderungen, Mahnungen','kasse',true)
     +navTile(I.nk,'Nebenkostenabrechnung','Abrechnung nach Ihrer Vorlage','nk',true)
     +navTile(I.weg,'Eigentum & R\u00fccklagen','WEG, Erhaltungsr\u00fccklage','weg',true)
@@ -692,6 +758,308 @@ function renderVerwaltung(){
     +'</div>';
   const back='<div class="center reveal"><button class="btn btn-red" onclick="go(\'home\')">\u2190 Zur\u00fcck</button></div>';
   return kopf('Verwaltung','Module',0.55)+verw+back;
+}
+
+/* ============================================================
+   WOHNUNGS-UEBERGABE / -ABNAHME  ·  Protokoll mit Fotos
+   Intelligente, raumbasierte Liste (aus Objekt/Wohnung vorbelegt),
+   mehrere Fotos je Raum, Ausgabe als mehrseitiges A4-PDF im Briefkopf.
+   Modus 'einzug' (Uebergabe) bzw. 'auszug' (Abnahme).
+   ============================================================ */
+function renderUebergabe(){ return renderProtokoll('einzug'); }
+function renderAbnahme(){ return renderProtokoll('auszug'); }
+
+function protoMkRoom(name,nass){
+  const labels=PROTO_CHECKS.concat(nass?PROTO_CHECKS_NASS:[]);
+  return {id:uid(),name:name||'Raum',nass:!!nass,items:labels.map(l=>({label:l,zustand:PROTO_ZUSTAND[0],bemerkung:''})),maengel:'',fotos:[]};
+}
+function protoDefaultRooms(e){
+  const rooms=[]; const add=(n,nass)=>rooms.push(protoMkRoom(n,!!nass));
+  add('Flur / Diele'); add('Wohnzimmer'); add('K\u00fcche',true); add('Bad / WC',true);
+  const z=Math.max(1,Math.round(Number(e&&e.zimmer)||1)); const schlaf=Math.max(1,z-1);
+  for(let i=0;i<schlaf;i++) add('Schlafzimmer'+(schlaf>1?' '+(i+1):''));
+  add('Abstellraum / Keller'); add('Balkon / Terrasse'); add('Allgemein / Au\u00dfen');
+  return rooms;
+}
+function protoDraftKey(mode){ return 'hv:proto:'+mode; }
+let protoSaveTimer=null;
+function protoSaveDraft(){ if(!proto)return; clearTimeout(protoSaveTimer); protoSaveTimer=setTimeout(()=>{ try{ localStorage.setItem(protoDraftKey(proto.mode),JSON.stringify(proto)); }catch(e){} },800); }
+function protoLoadDraft(mode){ try{ const s=localStorage.getItem(protoDraftKey(mode)); return s?JSON.parse(s):null; }catch(e){ return null; } }
+function protoClearDraft(mode){ try{ localStorage.removeItem(protoDraftKey(mode)); }catch(e){} }
+
+function renderProtokoll(mode){
+  const titel=mode==='einzug'?'Wohnungs\u00fcbergabe (Einzug)':'Wohnungsabnahme (Auszug)';
+  const label=mode==='einzug'?'\u00dcbergabe':'Abnahme';
+  const back='<div class="center reveal"><button class="btn btn-red" onclick="protoLeave()">\u2190 Zur\u00fcck</button></div>';
+  if(proto && proto.mode===mode){ return kopf(titel,'Protokoll',0.5)+protoEditorHtml()+back; }
+  if(state.objekte.length===0){
+    return kopf(titel,label,0.55)
+      +'<div class="empty reveal"><div class="es-ic">\uD83C\uDFE0</div><h3>Noch kein Objekt</h3><p>Legen Sie zuerst ein Objekt mit Wohnung an \u2013 dann werden die R\u00e4ume f\u00fcr das Protokoll automatisch vorbelegt.</p><div class="es-actions"><button class="btn btn-blue btn-sm" onclick="go(\'objekte\')">Zur Objektauswahl</button></div></div>'+back;
+  }
+  if(!protoSelObj || !_o(protoSelObj)){ protoSelObj=state.objekte[0].id; protoSelEinheit=null; }
+  const o=_o(protoSelObj); const ehs=o.einheiten||[];
+  if(!protoSelEinheit && ehs[0]) protoSelEinheit=ehs[0].id;
+  const objOpts=state.objekte.map(x=>'<option value="'+x.id+'"'+(x.id===protoSelObj?' selected':'')+'>'+esc(x.bezeichnung)+'</option>').join('');
+  const ehOpts=ehs.length?ehs.map(e=>'<option value="'+e.id+'"'+(e.id===protoSelEinheit?' selected':'')+'>'+esc(e.bezeichnung)+'</option>').join(''):'<option value="">(keine Einheit hinterlegt)</option>';
+  const draft=protoLoadDraft(mode);
+  const resume=draft?'<div class="card reveal" style="border-color:var(--accent-blue)"><h3>Entwurf gefunden</h3><p class="hint" style="margin-bottom:10px">Es liegt ein gespeicherter Entwurf f\u00fcr ein '+label+'-Protokoll vor.</p><button class="btn btn-blue btn-sm" onclick="protoResume(\''+mode+'\')">Entwurf fortsetzen</button></div>':'';
+  const pick='<div class="card reveal"><h3>Objekt & Wohnung w\u00e4hlen</h3><div class="proto-pick">'
+    +'<div class="field"><label>Objekt</label><select onchange="protoPickObj(this.value)">'+objOpts+'</select></div>'
+    +'<div class="field"><label>Wohnung / Einheit</label><select onchange="protoSetEinheit(this.value)">'+ehOpts+'</select></div>'
+    +'</div><button class="btn btn-blue" style="width:100%;margin-top:14px" onclick="protoStart(\''+mode+'\')">Protokoll starten</button>'
+    +'<p class="hint" style="margin-top:10px">Die R\u00e4ume werden automatisch aus der Wohnung vorbelegt \u2013 danach k\u00f6nnen Sie sie anpassen, je Raum Fotos hinzuf\u00fcgen und das fertige Protokoll als PDF erzeugen.</p></div>';
+  return kopf(titel,label,0.55)+resume+pick+back;
+}
+function protoPickObj(id){ protoSelObj=id; protoSelEinheit=null; render(); }
+function protoSetEinheit(v){ protoSelEinheit=v; }
+function protoResume(mode){ const d=protoLoadDraft(mode); if(d){ proto=d; render(); } }
+function protoLeave(){ go('verwaltung'); }
+function protoNeu(){ const m=proto?proto.mode:null; proto=null; if(m)protoClearDraft(m); render(); }
+function protoStart(mode){
+  const o=_o(protoSelObj)||state.objekte[0]; if(!o)return;
+  const e=(o.einheiten||[]).find(x=>x.id===protoSelEinheit)||(o.einheiten||[])[0]||null;
+  const akt=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+  proto={ id:uid(), mode, objektId:o.id, einheitId:e?e.id:null, einheitName:e?e.bezeichnung:'\u2014',
+    mieter:(akt&&akt.mieter)||'', datum:new Date().toISOString().slice(0,10),
+    zaehler:{strom:'',gas:'',wasser:'',heizung:''}, schluessel:'', bemerkung:'',
+    sigVermieter:null, sigMieter:null, sigOrt:(o.ort||''), empfaengerMail:'',
+    raeume:protoDefaultRooms(e) };
+  protoSaveDraft(); render();
+}
+
+function protoZField(label,key){ return '<div class="field"><label>'+label+'</label><input value="'+esc(proto.zaehler[key]||'')+'" oninput="protoZ(\''+key+'\',this.value)" placeholder="Stand"></div>'; }
+function protoEditorHtml(){
+  const p=proto, o=_o(p.objektId)||{};
+  let h='<div class="card reveal"><h3>Eckdaten</h3>'
+    +'<div class="kv"><div class="row"><span class="k">Objekt</span><span class="v">'+esc(o.bezeichnung||'\u2014')+'</span></div>'
+    +'<div class="row"><span class="k">Wohnung</span><span class="v">'+esc(p.einheitName||'\u2014')+'</span></div></div>'
+    +'<div class="field" style="margin-top:10px"><label>Mieter</label><input value="'+esc(p.mieter)+'" oninput="protoSet(\'mieter\',this.value)" placeholder="Name / Familie"></div>'
+    +'<div class="row2"><div class="field"><label>Datum</label><input type="date" value="'+esc(p.datum)+'" oninput="protoSet(\'datum\',this.value)"></div>'
+    +'<div class="field"><label>Vorgang</label><input value="'+(p.mode==='einzug'?'Einzug':'Auszug')+'" disabled></div></div></div>';
+  h+='<div class="card reveal"><h3>Z\u00e4hlerst\u00e4nde</h3><div class="row2">'+protoZField('Strom','strom')+protoZField('Gas','gas')+'</div><div class="row2">'+protoZField('Wasser','wasser')+protoZField('Heizung','heizung')+'</div></div>';
+  h+='<div class="card reveal"><h3>Schl\u00fcssel</h3><div class="field"><label>\u00dcbergebene Schl\u00fcssel (Art + Anzahl)</label><textarea oninput="protoSet(\'schluessel\',this.value)" placeholder="z. B. Haust\u00fcr 2, Wohnung 2, Briefkasten 1, Keller 1">'+esc(p.schluessel)+'</textarea></div></div>';
+  h+='<div class="sec-label reveal"><span>R\u00e4ume / Zustand</span><span>'+p.raeume.length+'</span></div>';
+  h+='<div id="protoRaeume">'+p.raeume.map((r,i)=>protoRoomHtml(r,i)).join('')+'</div>';
+  h+='<button class="btn btn-blue btn-sm" style="margin-bottom:16px" onclick="protoAddRoom()">+ Raum hinzuf\u00fcgen</button>';
+  h+='<div class="card reveal"><h3>Schlussbemerkung</h3><div class="field"><textarea oninput="protoSet(\'bemerkung\',this.value)" placeholder="z. B. Wohnung besenrein \u00fcbergeben; Restm\u00e4ngel siehe oben.">'+esc(p.bemerkung)+'</textarea></div></div>';
+  h+='<div class="card reveal"><h3>Unterschriften (Tablet)</h3>'
+    +'<div class="field"><label>Ort</label><input value="'+esc(p.sigOrt||'')+'" oninput="protoSet(\'sigOrt\',this.value)" placeholder="Unterschriftsort"></div>'
+    +'<div class="sig-slots">'+protoSigSlot('vermieter','Vermieter',p.sigVermieter)+protoSigSlot('mieter','Mieter',p.sigMieter)+'</div>'
+    +'<p class="hint" style="margin-top:8px">Beide Seiten k\u00f6nnen direkt auf dem Tablet mit Finger oder Stift unterschreiben \u2013 die Unterschriften erscheinen im PDF.</p></div>';
+  h+='<div class="card reveal"><h3>Kopie an Mieter (E-Mail)</h3><div class="field"><label>E-Mail-Adresse des Mieters</label><input type="email" value="'+esc(p.empfaengerMail||'')+'" oninput="protoSet(\'empfaengerMail\',this.value)" placeholder="name@beispiel.de"></div></div>';
+  h+='<div id="protoStatus" class="proto-status reveal"></div>';
+  h+='<div class="center reveal"><button class="btn btn-blue home-btn" onclick="protoFinish()"><span class="ic">'+svgWrapC(I.formular)+'</span> Protokoll abschlie\u00dfen & sichern</button></div>';
+  h+='<div class="proto-actions2 reveal"><button class="btn btn-blue btn-sm" onclick="protoMail()">Kopie per Mail an Mieter</button><button class="btn btn-ghost btn-sm" onclick="protoPdf()">Nur PDF herunterladen</button></div>';
+  h+='<div class="center reveal" style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="protoNeu()">Neues Protokoll / anderes Objekt</button></div>';
+  return h;
+}
+function protoSigSlot(role,label,data){
+  const inner=data
+    ? '<img class="sig-thumb" src="'+data+'" alt=""><button class="btn btn-ghost btn-sm" onclick="protoSignOpen(\''+role+'\')">Neu unterschreiben</button>'
+    : '<button class="btn btn-blue btn-sm" onclick="protoSignOpen(\''+role+'\')">Auf dem Tablet unterschreiben</button>';
+  return '<div class="sig-slot"><div class="sig-role">'+label+'</div>'+inner+'</div>';
+}
+function protoRoomHtml(r,i){
+  const items=r.items.map((it,j)=>'<div class="proto-item"><span class="pi-l">'+esc(it.label)+'</span>'
+    +'<select class="pi-z" onchange="protoItem('+i+','+j+',this.value)">'+PROTO_ZUSTAND.map(s=>'<option'+(it.zustand===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>').join('');
+  return '<div class="card proto-room reveal" id="proto-room-'+i+'">'
+    +'<div class="pr-head"><input class="pr-name" value="'+esc(r.name)+'" oninput="protoRoomName('+i+',this.value)">'
+    +'<button class="wiz-rm" onclick="protoRemoveRoom('+i+')">\u2715</button></div>'
+    +'<div class="proto-items">'+items+'</div>'
+    +'<div class="field" style="margin-top:8px"><label>M\u00e4ngel / Besonderheiten</label><textarea oninput="protoRoomMaengel('+i+',this.value)" placeholder="frei">'+esc(r.maengel)+'</textarea></div>'
+    +'<div class="pr-fotos-h">Fotos <span class="pr-hint">(6\u20138 je Zimmer empfohlen)</span></div>'
+    +'<div class="proto-fotos" id="proto-fotos-'+i+'">'+protoFotoStripHtml(r,i)+'</div>'
+    +'<button class="btn btn-blue btn-sm" onclick="protoPhotoPick('+i+')">+ Fotos hinzuf\u00fcgen</button>'
+    +'</div>';
+}
+function protoFotoStripHtml(r,i){
+  if(!r.fotos||!r.fotos.length) return '<div class="pr-nofoto">Noch keine Fotos</div>';
+  return r.fotos.map((f,k)=>'<div class="pr-foto"><img src="'+f.data+'" alt=""><button class="pr-fx" onclick="protoRemovePhoto('+i+','+k+')">\u2715</button></div>').join('');
+}
+function protoSet(k,v){ if(proto){ proto[k]=v; protoSaveDraft(); } }
+function protoZ(k,v){ if(proto){ proto.zaehler[k]=v; protoSaveDraft(); } }
+function protoItem(i,j,v){ const r=proto.raeume[i]; if(r&&r.items[j]){ r.items[j].zustand=v; protoSaveDraft(); } }
+function protoRoomName(i,v){ const r=proto.raeume[i]; if(r){ r.name=v; protoSaveDraft(); } }
+function protoRoomMaengel(i,v){ const r=proto.raeume[i]; if(r){ r.maengel=v; protoSaveDraft(); } }
+function protoAddRoom(){ proto.raeume.push(protoMkRoom('Weiterer Raum',false)); protoSaveDraft(); render(); }
+function protoRemoveRoom(i){ if(proto.raeume.length<=1)return; proto.raeume.splice(i,1); protoSaveDraft(); render(); }
+function protoRenderFotos(i){ const el=document.getElementById('proto-fotos-'+i); if(el) el.innerHTML=protoFotoStripHtml(proto.raeume[i],i); }
+function protoRemovePhoto(i,k){ const r=proto.raeume[i]; if(r){ r.fotos.splice(k,1); protoSaveDraft(); protoRenderFotos(i); } }
+function protoPhotoPick(i){ protoPhotoTarget=i; const inp=document.getElementById('protoFile'); if(inp){ inp.value=''; inp.click(); } }
+function protoCompress(file){
+  return new Promise(res=>{
+    const r=new FileReader();
+    r.onload=()=>{ const img=new Image();
+      img.onload=()=>{ const max=1280; let w=img.width,h=img.height;
+        if(w>h && w>max){ h=Math.round(h*max/w); w=max; } else if(h>=w && h>max){ w=Math.round(w*max/h); h=max; }
+        try{ const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+          res({data:c.toDataURL('image/jpeg',0.62),w,h}); }
+        catch(e){ res({data:r.result,w:img.width||1000,h:img.height||750}); } };
+      img.onerror=()=>res(null); img.src=r.result; };
+    r.onerror=()=>res(null); r.readAsDataURL(file);
+  });
+}
+
+function protoBuildDoc(){
+  if(!proto || !pdfReady()) return null;
+  const p=proto, o=_o(p.objektId)||{};
+  const {jsPDF}=window.jspdf, doc=new jsPDF('p','mm','a4');
+  const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR, contentW=rx-ML, bottom=P.PAGE_H-MB-6;
+  let y=tw_drawBriefkopfHeader(doc);
+  function addPg(){ doc.addPage(); y=P.MARGIN_T; }
+  function need(hh){ if(y+hh>bottom) addPg(); }
+  doc.setFontSize(9); doc.setTextColor(136,136,136); doc.text('Datum: '+(p.datum?fmtDate(p.datum):''),rx,y,{align:'right'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(17,17,17);
+  const titel=p.mode==='einzug'?'Wohnungs\u00fcbergabeprotokoll \u2013 Einzug':'Wohnungsabnahmeprotokoll \u2013 Auszug';
+  doc.text(titel,ML,y); y+=8;
+  doc.autoTable({startY:y,margin:{left:ML,right:MR},theme:'plain',
+    styles:{font:'helvetica',fontSize:9.5,textColor:[34,34,34],cellPadding:{top:1.5,bottom:1.5,left:0,right:2}},
+    columnStyles:{0:{cellWidth:42,textColor:[110,110,110]},1:{cellWidth:'auto'}},
+    body:[['Objekt',o.bezeichnung||'\u2014'],['Wohnung',p.einheitName||'\u2014'],['Mieter',p.mieter||'\u2014'],['Vorgang',p.mode==='einzug'?'Einzug / \u00dcbergabe':'Auszug / Abnahme']]});
+  y=doc.lastAutoTable.finalY+5;
+  need(20); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); doc.text('Z\u00e4hlerst\u00e4nde',ML,y);
+  doc.autoTable({startY:y+2,margin:{left:ML,right:MR},theme:'grid',
+    head:[['Strom','Gas','Wasser','Heizung']],body:[[p.zaehler.strom||'\u2014',p.zaehler.gas||'\u2014',p.zaehler.wasser||'\u2014',p.zaehler.heizung||'\u2014']],
+    headStyles:{fillColor:[196,30,30],textColor:[255,255,255],fontSize:9},styles:{font:'helvetica',fontSize:9,cellPadding:2,lineColor:[224,224,224],lineWidth:0.15}});
+  y=doc.lastAutoTable.finalY+6;
+  if((p.schluessel||'').trim()){ doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); need(14); doc.text('Schl\u00fcssel',ML,y); y+=2;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(40,40,40); const L=doc.splitTextToSize(p.schluessel,contentW); need(L.length*5+4); doc.text(L,ML,y+4); y+=L.length*5+8; }
+  (p.raeume||[]).forEach(r=>{
+    need(26);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(17,17,17); doc.text(r.name||'Raum',ML,y+3); y+=5;
+    doc.autoTable({startY:y,margin:{left:ML,right:MR},theme:'grid',
+      head:[['Position','Zustand']],body:(r.items||[]).map(it=>[it.label,it.zustand||'']),
+      headStyles:{fillColor:[45,52,54],textColor:[255,255,255],fontSize:8.5},
+      styles:{font:'helvetica',fontSize:8.5,cellPadding:1.6,textColor:[34,34,34],lineColor:[224,224,224],lineWidth:0.15},
+      columnStyles:{0:{cellWidth:contentW-32},1:{cellWidth:32,halign:'center'}}});
+    y=doc.lastAutoTable.finalY+3;
+    if((r.maengel||'').trim()){ const L=doc.splitTextToSize('M\u00e4ngel / Besonderheiten: '+r.maengel,contentW); need(L.length*4.6+4);
+      doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(150,40,40); doc.text(L,ML,y+2); y+=L.length*4.6+4; doc.setTextColor(34,34,34); }
+    const fotos=r.fotos||[];
+    if(fotos.length){
+      const gap=5, cols=2, cellW=(contentW-gap)/cols;
+      for(let i=0;i<fotos.length;i+=cols){
+        const pair=fotos.slice(i,i+cols);
+        const hs=pair.map(f=>{ const ratio=(f.h&&f.w)?f.h/f.w:0.72; return Math.min(cellW*ratio,62); });
+        const rowH=Math.max.apply(null,hs);
+        need(rowH+gap);
+        pair.forEach((f,k)=>{ const x=ML+k*(cellW+gap); try{ doc.addImage(f.data,'JPEG',x,y,cellW,hs[k],undefined,'FAST'); }catch(e){ try{ doc.addImage(f.data,'JPEG',x,y,cellW,hs[k]); }catch(e2){} } });
+        y+=rowH+gap;
+      }
+    }
+    y+=4;
+  });
+  need(42); y+=12;
+  const half=(contentW-12)/2, sigH=18;
+  if(p.sigVermieter){ try{ doc.addImage(p.sigVermieter,'PNG',ML,y-sigH,half*0.85,sigH); }catch(e){} }
+  if(p.sigMieter){ try{ doc.addImage(p.sigMieter,'PNG',rx-half,y-sigH,half*0.85,sigH); }catch(e){} }
+  doc.setDrawColor(120,120,120); doc.setLineWidth(0.3); doc.line(ML,y,ML+half,y); doc.line(rx-half,y,rx,y); y+=4;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(90,90,90);
+  const ortdat=(p.sigOrt?p.sigOrt+', ':'')+(p.datum?fmtDate(p.datum):'');
+  doc.text('Vermieter'+(ortdat?'  \u00b7  '+ortdat:''),ML,y);
+  doc.text('Mieter'+(p.mieter?' '+p.mieter:'')+(ortdat?'  \u00b7  '+ortdat:''),rx-half,y);
+  if(p.mode==='auszug'){ y+=9; const hk=doc.splitTextToSize('Hinweis: Mit R\u00fcckgabe der Wohnung und der Schl\u00fcssel beginnt die sechsmonatige Verj\u00e4hrungsfrist f\u00fcr Ersatzanspr\u00fcche (\u00a7 548 BGB).',contentW); need(hk.length*4+4); doc.setFontSize(8); doc.setTextColor(120,120,120); doc.text(hk,ML,y); }
+  const n=doc.internal.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); tw_drawBriefkopfFooter(doc,i); }
+  const fn=(p.mode==='einzug'?'Uebergabeprotokoll':'Abnahmeprotokoll')+'_'+((o.bezeichnung||'Objekt').replace(/[^a-zA-Z0-9]/g,'_'))+'_'+((p.datum||'').replace(/-/g,''))+'.pdf';
+  return {doc:doc, fn:fn, titel:titel};
+}
+function protoLogAkte(driveId,driveLink){
+  const o=_o(proto.objektId); if(!o) return;
+  const titel=proto.mode==='einzug'?'Wohnungs\u00fcbergabeprotokoll \u2013 Einzug':'Wohnungsabnahmeprotokoll \u2013 Auszug';
+  o.dokumente=o.dokumente||[];
+  o.dokumente.unshift({id:uid(),name:titel,art:'Protokoll',datum:proto.datum||new Date().toISOString().slice(0,10),driveId:driveId||null,driveLink:driveLink||null});
+  o.geaendert=Date.now(); save();
+}
+function protoPdf(){
+  if(!proto) return;
+  if(!pdfReady()){ alert('PDF-Bibliothek ist noch nicht geladen \u2013 bitte kurz warten und erneut versuchen.'); return; }
+  const b=protoBuildDoc(); if(!b) return;
+  protoLogAkte(null,null);
+  try{ b.doc.save(b.fn); }catch(e){ try{ window.open(b.doc.output('bloburl'),'_blank'); }catch(e2){} }
+}
+async function protoFinish(){
+  if(!proto) return;
+  if(!pdfReady()){ alert('PDF-Bibliothek ist noch nicht geladen.'); return; }
+  const b=protoBuildDoc(); if(!b) return;
+  try{ b.doc.save(b.fn); }catch(e){ try{ window.open(b.doc.output('bloburl'),'_blank'); }catch(e2){} }
+  let fid=null, link=null;
+  if(cloudCfg.connected && cloudCfg.clientId){
+    try{ protoStatus('Speichere auf Google Drive\u2026'); const res=await cloudUploadPdf(b.doc.output('blob'),b.fn); fid=res.id||null; link=res.webViewLink||null; protoStatus('Dauerhaft auf Google Drive gesichert (Ordner \u201EProtokolle\u201C).'); }
+    catch(e){ protoStatus('Drive-Upload nicht m\u00f6glich: '+e.message+' \u2013 PDF wurde lokal gespeichert.'); }
+  } else { protoStatus('PDF lokal gespeichert. F\u00fcr dauerhafte Cloud-Ablage bitte Google Drive verbinden (Verwaltung \u2192 Stammdaten).'); }
+  protoLogAkte(fid,link);
+}
+async function protoMail(){
+  if(!proto) return;
+  if(!pdfReady()){ alert('PDF-Bibliothek ist noch nicht geladen.'); return; }
+  const to=(proto.empfaengerMail||'').trim();
+  if(!to || to.indexOf('@')<1){ alert('Bitte zuerst eine g\u00fcltige E-Mail-Adresse des Mieters eintragen.'); return; }
+  const b=protoBuildDoc(); if(!b) return;
+  const b64=(b.doc.output('datauristring')||'').split(',').pop();
+  const body='Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie eine Kopie des Protokolls \u201E'+b.titel+'\u201C als PDF-Datei.\n\nMit freundlichen Gr\u00fc\u00dfen\n'+(TW_PDF.FIRMA_NAME||'');
+  if(cloudCfg.connected && cloudCfg.clientId){
+    try{ protoStatus('Sende Mail \u00fcber Gmail an '+to+'\u2026'); await gmailSend(to,b.titel,body,b.fn,b64); protoStatus('Kopie per Mail an '+to+' gesendet (auch in Ihrem Gmail-Ordner \u201EGesendet\u201C).'); return; }
+    catch(e){
+      try{ cloudToken=null; await cloudGetToken(true); await gmailSend(to,b.titel,body,b.fn,b64); protoStatus('Kopie per Mail an '+to+' gesendet.'); return; }
+      catch(e2){ protoStatus('Gmail-Versand nicht m\u00f6glich ('+e2.message+'). Ich \u00f6ffne Ihr Mailprogramm \u2013 bitte das gespeicherte PDF anh\u00e4ngen.'); }
+    }
+  } else { protoStatus('Nicht mit Google verbunden \u2013 ich \u00f6ffne Ihr Mailprogramm. Bitte das PDF aus dem Download anh\u00e4ngen.'); }
+  try{ b.doc.save(b.fn); }catch(e){}
+  try{ window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(b.titel)+'&body='+encodeURIComponent(body+'\n\n(Bitte das soeben gespeicherte PDF anh\u00e4ngen.)'); }catch(e){}
+}
+function protoStatus(t){ const el=document.getElementById('protoStatus'); if(el) el.textContent=t; }
+/* ----- E-Mail (Gmail-API) ----- */
+function b64url(s){ return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function utf8b64(s){ return btoa(unescape(encodeURIComponent(s))); }
+function protoBuildMime(to,subject,body,filename,pdfB64){
+  const B='twmime'+Date.now().toString(36);
+  return ['To: '+to,'Subject: =?UTF-8?B?'+utf8b64(subject)+'?=','MIME-Version: 1.0',
+    'Content-Type: multipart/mixed; boundary="'+B+'"','',
+    '--'+B,'Content-Type: text/plain; charset="UTF-8"','Content-Transfer-Encoding: base64','',utf8b64(body),
+    '--'+B,'Content-Type: application/pdf; name="'+filename+'"','Content-Disposition: attachment; filename="'+filename+'"','Content-Transfer-Encoding: base64','',pdfB64,
+    '--'+B+'--',''].join('\r\n');
+}
+async function gmailSend(to,subject,body,filename,pdfB64){
+  await cloudGetToken(false);
+  const raw=b64url(protoBuildMime(to,subject,body,filename,pdfB64));
+  const r=await cloudFetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({raw:raw})});
+  return await r.json();
+}
+/* ----- Unterschriften-Pad (Tablet) ----- */
+function protoSignOpen(role){
+  if(!proto) return; sigRole=role; sigHasInk=false;
+  const who=role==='vermieter'?'Vermieter':'Mieter';
+  document.getElementById('mTitle').textContent='Unterschrift \u2013 '+who;
+  document.getElementById('mBody').innerHTML='<div class="field"><label>Ort</label><input value="'+esc(proto.sigOrt||'')+'" placeholder="Ort" oninput="protoSet(\'sigOrt\',this.value)"></div>'
+    +'<canvas id="sigPad" class="sigpad"></canvas><div class="sighint">Mit Finger oder Stift im wei\u00dfen Feld unterschreiben.</div>';
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-ghost btn-sm" onclick="protoSignClear()">L\u00f6schen</button>'
+    +'<button class="btn btn-red btn-sm" onclick="closeModal()">Abbrechen</button>'
+    +'<button class="btn btn-blue btn-sm" onclick="protoSignSave()">\u00dcbernehmen</button>';
+  openModal(); setTimeout(protoSignInit,40);
+}
+function protoSignInit(){
+  const c=document.getElementById('sigPad'); if(!c) return;
+  const rect=c.getBoundingClientRect(); const dpr=window.devicePixelRatio||1;
+  const cssW=Math.max(260,rect.width||300), cssH=170;
+  c.width=Math.round(cssW*dpr); c.height=Math.round(cssH*dpr); c.style.height=cssH+'px';
+  const ctx=c.getContext('2d'); if(!ctx) return;
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,c.width,c.height); ctx.scale(dpr,dpr);
+  ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0f1923';
+  sigCtx=ctx; sigDrawing=false;
+  const pos=ev=>{ const r=c.getBoundingClientRect(); const q=(ev.touches&&ev.touches[0])?ev.touches[0]:ev; return {x:q.clientX-r.left,y:q.clientY-r.top}; };
+  const down=ev=>{ ev.preventDefault(); sigDrawing=true; const q=pos(ev); ctx.beginPath(); ctx.moveTo(q.x,q.y); };
+  const move=ev=>{ if(!sigDrawing) return; ev.preventDefault(); const q=pos(ev); ctx.lineTo(q.x,q.y); ctx.stroke(); sigHasInk=true; };
+  const up=()=>{ sigDrawing=false; };
+  c.addEventListener('pointerdown',down); c.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
+  c.addEventListener('touchstart',down,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',up);
+}
+function protoSignClear(){ const c=document.getElementById('sigPad'); if(c&&sigCtx){ sigCtx.save(); sigCtx.setTransform(1,0,0,1,0,0); sigCtx.fillStyle='#ffffff'; sigCtx.fillRect(0,0,c.width,c.height); sigCtx.restore(); sigHasInk=false; } }
+function protoSignSave(){
+  const c=document.getElementById('sigPad'); if(!c||!proto) return;
+  if(!sigHasInk){ alert('Bitte zuerst im Feld unterschreiben.'); return; }
+  let data=''; try{ data=c.toDataURL('image/png'); }catch(e){ data=''; }
+  if(sigRole==='vermieter') proto.sigVermieter=data; else proto.sigMieter=data;
+  protoSaveDraft(); closeModal(); render();
 }
 function iconPlusBlue(){ return '<svg viewBox="0 0 32 32" fill="none" style="width:16px;height:16px"><path d="M16 6v20M6 16h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'; }
 function svgWrapC(p){ return '<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">'+p.replace(/white/g,'currentColor')+'</svg>'; }
@@ -791,8 +1159,9 @@ function mvBlock(o,e,m){
 function dokumenteCard(o){
   const dk=o.dokumente||[];
   let inner = dk.length
-    ? dk.map(d=>'<div class="dok-row"><div class="di"><b>'+esc(d.name)+'</b><span>'+esc(d.art||'Dokument')+' \u00b7 '+fmtDate(d.datum)+'</span></div>'
-        +'<button class="mini red" onclick="deleteDok(\''+o.id+'\',\''+d.id+'\')">Entf.</button></div>').join('')
+    ? dk.map(d=>{ const nm=d.driveLink?'<a href="'+esc(d.driveLink)+'" target="_blank" rel="noopener" style="color:var(--accent-blue);text-decoration:none">'+esc(d.name)+'</a>':esc(d.name);
+        return '<div class="dok-row"><div class="di"><b>'+nm+'</b><span>'+esc(d.art||'Dokument')+' \u00b7 '+fmtDate(d.datum)+(d.driveLink?' \u00b7 auf Drive':'')+'</span></div>'
+        +'<button class="mini red" onclick="deleteDok(\''+o.id+'\',\''+d.id+'\')">Entf.</button></div>'; }).join('')
     : '<div class="leer-hint">Noch keine Dokumente vermerkt.</div>';
   inner+='<button class="add-row" onclick="openDokModal(\''+o.id+'\')">+ Dokument vermerken</button>';
   return '<div class="card reveal d2"><div class="panel-head"><h3>Dokumente</h3></div>'+inner
@@ -2023,6 +2392,12 @@ document.getElementById('importFile').addEventListener('change',e=>{
   r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d||!Array.isArray(d.objekte))throw 0; state=d; save(); go('home'); }
     catch(err){ alert('Datei konnte nicht gelesen werden. Bitte eine g\u00fcltige Sicherungsdatei w\u00e4hlen.'); } };
   r.readAsText(f); e.target.value='';
+});
+document.getElementById('protoFile').addEventListener('change', async e=>{
+  const files=Array.from(e.target.files||[]); const i=protoPhotoTarget; e.target.value='';
+  if(i<0 || !proto || !proto.raeume[i] || !files.length) return;
+  for(const f of files){ const c=await protoCompress(f); if(c) proto.raeume[i].fotos.push(c); }
+  protoSaveDraft(); protoRenderFotos(i);
 });
 function wipe(){
   document.getElementById('mTitle').textContent='Alle Daten l\u00f6schen';
