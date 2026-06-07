@@ -399,6 +399,62 @@ body::before{
 .recht-det .praxis b{color:var(--accent-red-light)}
 .recht-stand{font-size:11px;color:var(--text-muted);font-family:'Oswald',sans-serif;letter-spacing:.4px;text-transform:uppercase;margin:0 0 10px}
 @media print{.fbv-paper,.fbv-rechtbox,.recht-det .praxis{background:#fff!important;border:1px solid #ccc!important}.fbv-text,.fbv-recht,.lang,.praxis{color:#222!important}}
+
+/* ===== PDF-Briefbogen-Faksimile (A4, Briefkopf 1:1 wie Druck) =====
+   Maszstabstreu ueber Container-Query-Units (cqw = 1% der Blattbreite),
+   damit Optik auf Handy und Desktop identisch wirkt. Rein additiv. */
+.overlay.pdfwide .modal{max-width:760px}
+.pdf-sheet-wrap{container-type:inline-size;width:100%;max-width:640px;margin:14px auto 6px}
+.pdf-sheet{display:flex;flex-direction:column;min-height:141.4cqw;background:#fff;color:#1a1a1a;
+  font-family:Helvetica,Arial,sans-serif;box-sizing:border-box;
+  padding:8.5cqw 8.6cqw 11.9cqw 10.5cqw;border-radius:2px;
+  box-shadow:0 12px 42px rgba(0,0,0,.55)}
+.ps-head{display:flex;justify-content:space-between;align-items:flex-start;gap:4cqw}
+.ps-logo{width:40.5cqw;height:auto;display:block}
+.ps-kontakt{text-align:right;font-size:2.0cqw;line-height:1.5;color:#333;padding-top:1cqw;white-space:nowrap}
+.ps-rule{margin-top:2.6cqw;border-top:max(1.4px,.38cqw) solid #c41e1e}
+.ps-absender{font-size:1.35cqw;color:#aaa;margin-top:1.5cqw;letter-spacing:.2px}
+.ps-body{flex:1 0 auto;margin-top:4cqw;color:#1a1a1a}
+.ps-empf{display:flex;justify-content:space-between;align-items:flex-start;gap:4cqw;margin-bottom:5cqw}
+.ps-empf-name{font-size:2.7cqw;font-weight:bold;color:#111;margin-bottom:.6cqw}
+.ps-empf-z{font-size:2.4cqw;color:#333;line-height:1.45}
+.ps-datum{font-size:2.4cqw;color:#222;text-align:right;white-space:nowrap}
+.ps-datum-l{color:#888;font-size:2.1cqw}
+.ps-betreff{font-size:3.1cqw;font-weight:bold;color:#111;line-height:1.3;margin:1cqw 0 3cqw}
+.ps-risk{font-size:2.0cqw;font-style:italic;color:#c41e1e;line-height:1.45;margin-bottom:3cqw}
+.ps-h{font-size:2.65cqw;font-weight:bold;color:#c41e1e;margin:4cqw 0 1.5cqw}
+.ps-h:first-child{margin-top:0}
+.ps-text{font-size:2.45cqw;line-height:1.55;color:#282828;margin:2cqw 0}
+.ps-brief{white-space:pre-wrap;font-size:2.45cqw;line-height:1.6;color:#282828}
+.ps-tab{width:100%;border-collapse:collapse;margin:2cqw 0}
+.ps-tab td{padding:1.2cqw 0;font-size:2.35cqw;vertical-align:top;border-bottom:1px solid #e0e0e0}
+.ps-tab td.k{color:#6e6e6e;width:42%}
+.ps-tab td.v{color:#222}
+.ps-grid{width:100%;border-collapse:collapse;margin:2.5cqw 0;font-size:2.25cqw}
+.ps-grid th{background:#c41e1e;color:#fff;padding:1.6cqw 1.8cqw;text-align:left;font-weight:bold}
+.ps-grid td{border:1px solid #e0e0e0;padding:1.6cqw 1.8cqw;color:#222}
+.ps-sign{display:flex;gap:6cqw;margin-top:8cqw}
+.ps-sign>div{flex:1;font-size:2.2cqw;color:#555}
+.ps-sign span{display:block;border-top:1px solid #999;margin-bottom:1.4cqw;height:1px}
+.ps-foot{margin-top:auto;padding-top:5cqw}
+.ps-foot-rule{border-top:max(1px,.25cqw) solid #c41e1e;margin-bottom:1.8cqw}
+.ps-foot-row{display:flex;justify-content:space-between;gap:3cqw;line-height:1.55}
+.ps-firma{color:#c41e1e;font-weight:bold;font-size:1.75cqw}
+.ps-grau{color:#666;font-size:1.6cqw}
+@media print{.pdf-sheet{box-shadow:none}}
+
+/* ===== Formular ausfuellen mit Live-Briefbogen (Split-View) ===== */
+.overlay.fillwide .modal{max-width:1000px}
+.fb-fill{display:flex;gap:20px;align-items:flex-start}
+.fb-fill-form{flex:0 0 318px;min-width:0}
+.fb-fill-prev{flex:1 1 auto;min-width:0;position:sticky;top:0;align-self:flex-start}
+.fb-fill-prev .fbv-lab{margin-top:0;position:sticky;top:0;background:var(--bg-card);padding:2px 0 6px;z-index:1}
+@media (max-width:780px){
+  .fb-fill{flex-direction:column}
+  .fb-fill-form{flex:none;width:100%;order:2}
+  .fb-fill-prev{width:100%;order:1;position:static}
+  .fb-fill-prev .pdf-sheet-wrap{margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -778,7 +834,7 @@ const ICON_CAM='<path d="M4 11.5a2 2 0 012-2h2.2l1.5-2.4a1.5 1.5 0 011.3-.7h6a1.
 
 /* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
-  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v13 (+ Mietvertrag ausf\u00fchrlich)<br>'
+  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v16 (Live-Briefbogen, gegl\u00e4ttet)<br>'
     +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
   return '<div class="home-logo reveal">'+logoHTML(1.2)+'</div>'
     + '<div class="home-block">'
@@ -2118,8 +2174,35 @@ function renderFormulare(){
     +'<div class="card reveal"><h3>Vorlage w\u00e4hlen</h3><p class="hint">Person und Wohnung werden automatisch \u00fcbernommen. Ausgabe als PDF im Briefkopf \u2013 nur noch unterschreiben.</p></div>'
     +body+disc+back;
 }
+let fbCurrentId=null, fbLiveTimer=null;
+/* ctx aus den Eingabefeldern (gleiche Bildung wie in formblattPdf) */
+function fbCollectCtx(def){
+  const g=x=>document.getElementById(x);
+  const o=(g('f_obj')&&_o(g('f_obj').value))||null;
+  const e=o&&g('f_einheit')&&(o.einheiten||[]).find(x=>x.id===g('f_einheit').value);
+  const mv=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
+  const adr=o?[o.strasse,[o.plz,o.ort].filter(Boolean).join(' ')].filter(Boolean).join(', '):'';
+  const emp={name:(g('f_name')?g('f_name').value:'')||'',einheit:e?e.bezeichnung:'',adresse:adr};
+  const f={}; (def.felder||[]).forEach(fl=>{ const el=g('f_'+fl.key); f[fl.key]=el?el.value:''; });
+  return {o:o||{bezeichnung:''},e,mv,emp,f,today:new Date(),D:fmtDate,eur,
+    frist:d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toLocaleDateString('de-DE');}};
+}
+/* Eigentliches Neuzeichnen des Live-Briefbogens */
+function fbLiveRender(){
+  const prev=document.getElementById('fbLivePrev'); if(!prev||!fbCurrentId)return;
+  const def=FORMBLATT.find(x=>x.id===fbCurrentId); if(!def)return;
+  const ctx=fbCollectCtx(def);
+  let out; try{ out=def.build(ctx); }catch(e){ out=null; }
+  prev.innerHTML=fbSheetHtml(def,out,ctx,false);
+}
+/* Debounced: bei Eingabe nach kurzer Pause, beim Oeffnen (now) sofort */
+function fbLiveUpdate(now){
+  clearTimeout(fbLiveTimer);
+  if(now){ fbLiveRender(); } else { fbLiveTimer=setTimeout(fbLiveRender,160); }
+}
 function openFormblattModal(id){
   const def=FORMBLATT.find(x=>x.id===id); if(!def)return;
+  fbCurrentId=id;
   const objOpts='<option value="">\u2013</option>'+state.objekte.map(o=>'<option value="'+o.id+'">'+esc(o.bezeichnung)+'</option>').join('');
   const felderHtml=def.felder.map(fl=>{
     if(fl.type==='area') return '<div class="field"><label>'+fl.label+'</label><textarea id="f_'+fl.key+'" placeholder="'+(fl.ph||'')+'"></textarea></div>';
@@ -2128,14 +2211,18 @@ function openFormblattModal(id){
     return '<div class="field"><label>'+fl.label+'</label><input id="f_'+fl.key+'" type="'+t+'"'+(fl.type==='num'?' inputmode="decimal"':'')+' placeholder="'+(fl.ph||'')+'"></div>';
   }).join('');
   document.getElementById('mTitle').textContent=def.titel;
-  document.getElementById('mBody').innerHTML=
-     (def.risiko?'<div class="notice" style="border-color:var(--accent-red);margin-bottom:12px"><b style="color:var(--accent-red-light)">Hochrisiko-Dokument</b><p>Vorrangig ein gepr\u00fcftes Verbandsmuster (Haus & Grund) bzw. anwaltliche Pr\u00fcfung verwenden.</p></div>':'')
+  const formCol='<div class="fb-fill-form" oninput="fbLiveUpdate()" onchange="fbLiveUpdate()">'
+     +(def.risiko?'<div class="notice" style="border-color:var(--accent-red);margin-bottom:12px"><b style="color:var(--accent-red-light)">Hochrisiko-Dokument</b><p>Vorrangig ein gepr\u00fcftes Verbandsmuster (Haus & Grund) bzw. anwaltliche Pr\u00fcfung verwenden.</p></div>':'')
     +'<div class="field"><label>Objekt</label><select id="f_obj" onchange="fbObjChange()">'+objOpts+'</select></div>'
     +'<div class="field"><label>Einheit / Wohnung</label><select id="f_einheit" onchange="fbEinheitChange()"></select></div>'
     +'<div class="field"><label>Mieter / Person</label><input id="f_name" placeholder="wird aus Mietverh\u00e4ltnis \u00fcbernommen"></div>'
-    +felderHtml;
+    +felderHtml+'</div>';
+  const prevCol='<div class="fb-fill-prev"><div class="fbv-lab">Live-Vorschau \u00b7 Briefbogen</div><div id="fbLivePrev"></div></div>';
+  document.getElementById('mBody').innerHTML='<div class="fb-fill">'+formCol+prevCol+'</div>';
   document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Abbrechen</button><button class="btn btn-ghost" onclick="formblattPdf(\''+id+'\',\'print\')">\u00d6ffnen / Drucken</button><button class="btn btn-blue" onclick="formblattPdf(\''+id+'\',\'save\')">Als PDF</button>';
-  openModal(); fbObjChange();
+  document.getElementById('overlay').classList.remove('pdfwide');
+  document.getElementById('overlay').classList.add('fillwide');
+  openModal(); fbObjChange(); fbLiveUpdate(true);
 }
 function fbObjChange(){
   const objSel=document.getElementById('f_obj'); if(!objSel)return;
@@ -2148,6 +2235,7 @@ function fbEinheitChange(){
   if(!objSel||!eSel||!pIn)return;
   const o=_o(objSel.value), e=o&&(o.einheiten||[]).find(x=>x.id===eSel.value), akt=e&&(e.mietverhaeltnisse||[]).find(m=>!m.auszug);
   pIn.value=akt?(akt.mieter||''):'';
+  fbLiveUpdate();
 }
 function fbRenderSections(doc,sections,startY,foot){
   const P=TW_PDF, ML=P.MARGIN_L, MR=P.MARGIN_R, MB=P.MARGIN_B, rx=P.PAGE_W-MR; let y=startY;
@@ -2214,6 +2302,67 @@ function fbSectionsHtml(out){
     return '';
   }).join('');
 }
+/* ---- Briefbogen-Faksimile (HTML) : spiegelt den jsPDF-Briefkopf 1:1 ----
+   Quelle der Stammdaten: ausschliesslich TW_PDF (keine Hartkodierung). */
+function pdfSheetHeaderHtml(){
+  const P=TW_PDF;
+  return '<div class="ps-head"><img class="ps-logo" src="'+PDF_LOGO+'" alt="Thomas Willwacher Hausverwaltung">'
+    +'<div class="ps-kontakt"><div>'+esc(P.ADRESSE_1)+'</div><div>'+esc(P.ADRESSE_2)+'</div>'
+    +'<div>'+esc(P.TEL)+'</div><div>'+esc(P.MOBIL)+'</div><div>'+esc(P.EMAIL)+'</div></div></div>'
+    +'<div class="ps-rule"></div><div class="ps-absender">'+esc(P.ABSENDER_LINE)+'</div>';
+}
+function pdfSheetFooterHtml(seite,seiten){
+  const P=TW_PDF; seite=seite||1; seiten=seiten||1;
+  return '<div class="ps-foot"><div class="ps-foot-rule"></div>'
+    +'<div class="ps-foot-row"><span class="ps-firma">'+esc(P.FIRMA_NAME)+'</span>'
+      +'<span class="ps-grau">'+esc(P.STEUERNUMMER)+'  \u00b7  '+esc(P.USTID)+'</span></div>'
+    +'<div class="ps-foot-row"><span class="ps-grau">'+esc(P.BANK1)+'</span>'
+      +'<span class="ps-grau">Seite '+seite+(seiten>1?' / '+seiten:'')+'</span></div>'
+    +'<div class="ps-foot-row"><span class="ps-grau">'+esc(P.BANK2)+'</span></div></div>';
+}
+function pdfSheetEmpfHtml(data){
+  data=data||{}; let l='';
+  if(data.name) l+='<div class="ps-empf-name">'+esc(data.name)+'</div>';
+  if(data.zusatz) l+='<div class="ps-empf-z">'+esc(data.zusatz)+'</div>';
+  if(data.strasse) l+='<div class="ps-empf-z">'+esc(data.strasse)+'</div>';
+  if(data.plzOrt) l+='<div class="ps-empf-z">'+esc(data.plzOrt)+'</div>';
+  let dt='';
+  if(data.datum){ let t; try{ t=(typeof data.datum==='string')?data.datum:new Date(data.datum).toLocaleDateString('de-DE'); }catch(e){ t=String(data.datum); }
+    dt='<div class="ps-datum"><span class="ps-datum-l">Datum:</span> <b>'+esc(t)+'</b></div>'; }
+  return '<div class="ps-empf"><div class="ps-empf-l">'+l+'</div>'+dt+'</div>';
+}
+function fbPaperBody(out){
+  if(!out) return '';
+  if(out.typ==='brief') return '<div class="ps-brief">'+esc(out.text||'').replace(/\n/g,'<br>')+'</div>';
+  return (out.sections||[]).map(s=>{
+    if(s.t==='head') return '<h4 class="ps-h">'+esc(s.text||'')+'</h4>';
+    if(s.t==='text') return '<p class="ps-text">'+esc(s.text||'').replace(/\n/g,'<br>')+'</p>';
+    if(s.t==='table') return '<table class="ps-tab">'+(s.rows||[]).map(r=>'<tr><td class="k">'+esc(r[0]||'')+'</td><td class="v">'+esc(r[1]||'')+'</td></tr>').join('')+'</table>';
+    if(s.t==='grid'){ const head='<tr>'+(s.head||[]).map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
+      const bdy=(s.rows||[]).map(r=>'<tr>'+r.map(c=>'<td>'+esc(c||'')+'</td>').join('')+'</tr>').join('');
+      return '<table class="ps-grid"><thead>'+head+'</thead><tbody>'+bdy+'</tbody></table>'; }
+    if(s.t==='sign') return '<div class="ps-sign"><div><span></span>'+esc(s.left||'Ort, Datum / Vermieter')+'</div><div><span></span>'+esc(s.right||'Ort, Datum / Mieter')+'</div></div>';
+    return '';
+  }).join('');
+}
+/* Komplettes Blatt: Header + Empfaengerblock + Betreff + Inhalt + Footer */
+function fbSheetHtml(def,out,ctx,muster){
+  let empfHtml;
+  if(def.empf){
+    const emp=(muster?{name:FB_PH,zusatz:'',einheit:FB_PH,adresse:FB_PH}:((ctx&&ctx.emp)||{}));
+    const zusatz=(emp.einheit||'')+(emp.adresse?' \u00b7 '+emp.adresse:'')||emp.zusatz||'';
+    empfHtml=pdfSheetEmpfHtml({name:emp.name||'',zusatz:zusatz,datum:muster?'__.__.____':new Date().toLocaleDateString('de-DE')});
+  } else {
+    empfHtml=pdfSheetEmpfHtml({datum:muster?'__.__.____':new Date().toLocaleDateString('de-DE')});
+  }
+  const betreff=(out&&out.betreff)||def.titel;
+  const risk=def.risiko?'<div class="ps-risk">Hinweis: Vorrangig gepr\u00fcftes Verbandsmuster (Haus &amp; Grund) bzw. anwaltliche Pr\u00fcfung verwenden. Arbeitshilfe, keine Rechtsberatung.</div>':'';
+  return '<div class="pdf-sheet-wrap"><div class="pdf-sheet">'
+    +pdfSheetHeaderHtml()
+    +'<div class="ps-body">'+empfHtml+'<div class="ps-betreff">'+esc(betreff)+'</div>'+risk+fbPaperBody(out)+'</div>'
+    +pdfSheetFooterHtml(1,1)
+    +'</div></div>';
+}
 function openFormblattVorschau(id){
   const def=FORMBLATT.find(x=>x.id===id); if(!def) return;
   let out; try{ out=def.build(fbMusterCtx(def)); }catch(e){ out=null; }
@@ -2226,12 +2375,14 @@ function openFormblattVorschau(id){
     +(def.zweck?'<p class="fbv-zweck">'+esc(def.zweck)+'</p>':'')
     +(rechtHtml?'<div class="fbv-rechtbox"><div class="fbv-lab">Rechtsgrundlagen</div>'+rechtHtml+'</div>':'')
     +hinweisHtml
-    +'<div class="fbv-lab">Vorschau (leeres Muster)</div>'
-    +'<div class="fbv-paper">'+fbSectionsHtml(out)+'</div>';
+    +'<div class="fbv-lab">Vorschau \u00b7 so kommt das Dokument aus dem Drucker</div>'
+    +fbSheetHtml(def,out,fbMusterCtx(def),true);
   document.getElementById('mFoot').innerHTML=
      '<button class="btn btn-red" onclick="closeModal()">Schlie\u00dfen</button>'
     +'<button class="btn btn-ghost" onclick="formblattMusterPdf(\''+id+'\')">Leeres Muster drucken</button>'
     +'<button class="btn btn-blue" onclick="openFormblattModal(\''+id+'\')">Jetzt ausf\u00fcllen</button>';
+  document.getElementById('overlay').classList.remove('fillwide');
+  document.getElementById('overlay').classList.add('pdfwide');
   openModal();
 }
 function formblattMusterPdf(id){
@@ -2976,7 +3127,7 @@ function confirmWipe(){ state={objekte:[],einstellungen:{version:'1.0'}}; save()
 
 /* ---------- Modal-Steuerung ---------- */
 function openModal(){ document.getElementById('overlay').classList.add('open'); }
-function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+function closeModal(){ const o=document.getElementById('overlay'); o.classList.remove('open'); o.classList.remove('pdfwide'); o.classList.remove('fillwide'); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 
 /* ---------- Start ---------- */
