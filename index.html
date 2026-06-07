@@ -455,6 +455,17 @@ body::before{
   .fb-fill-prev{width:100%;order:1;position:static}
   .fb-fill-prev .pdf-sheet-wrap{margin-top:4px}
 }
+
+/* ===== Protokoll-Briefbogen: Foto-Raster, Unterschriften mit Bild ===== */
+.ps-maengel{font-size:2.35cqw;font-style:italic;color:#962828;margin:1.5cqw 0;line-height:1.45}
+.ps-fotos{display:grid;grid-template-columns:1fr 1fr;gap:2cqw;margin:2.5cqw 0}
+.ps-fotos img{width:100%;height:auto;display:block;border:1px solid #ddd;border-radius:2px}
+.ps-sign2{display:flex;gap:6cqw;margin-top:7cqw}
+.ps-sign2>div{flex:1;font-size:2.2cqw;color:#555}
+.ps-sigimg{height:13cqw;display:flex;align-items:flex-end}
+.ps-sigimg img{max-height:13cqw;max-width:100%;object-fit:contain}
+.ps-sign2 .ps-sigline{display:block;border-top:1px solid #999;margin:1cqw 0 1.4cqw;height:1px}
+.ps-hinweis{font-size:1.95cqw;color:#777;margin-top:4cqw;line-height:1.45}
 </style>
 </head>
 <body>
@@ -834,7 +845,7 @@ const ICON_CAM='<path d="M4 11.5a2 2 0 012-2h2.2l1.5-2.4a1.5 1.5 0 011.3-.7h6a1.
 
 /* ---------- Startseite: Logo oben + Block (Ueberschrift/Uhr/Buttons/Drive) ---------- */
 function renderHome(){
-  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v16 (Live-Briefbogen, gegl\u00e4ttet)<br>'
+  const foot='<div class="foot reveal d3">Thomas Willwacher Hausverwaltung \u00b7 App-Stand v18 (Protokoll-Vorschau + Schlussbemerkung)<br>'
     +'Browserdaten sind l\u00f6schbar \u2013 bitte regelm\u00e4\u00dfig <a href="#" onclick="exportData();return false" style="color:var(--accent-blue);text-decoration:none">sichern</a>.</div>';
   return '<div class="home-logo reveal">'+logoHTML(1.2)+'</div>'
     + '<div class="home-block">'
@@ -999,6 +1010,7 @@ function protoEditorHtml(){
     +'<p class="hint" style="margin-top:8px">Beide Seiten k\u00f6nnen direkt auf dem Tablet mit Finger oder Stift unterschreiben \u2013 die Unterschriften erscheinen im PDF.</p></div>';
   h+='<div class="card reveal"><h3>Kopie an Mieter (E-Mail)</h3><div class="field"><label>E-Mail-Adresse des Mieters</label><input type="email" value="'+esc(p.empfaengerMail||'')+'" oninput="protoSet(\'empfaengerMail\',this.value)" placeholder="name@beispiel.de"></div></div>';
   h+='<div id="protoStatus" class="proto-status reveal"></div>';
+  h+='<div class="center reveal" style="margin-bottom:10px"><button class="btn btn-ghost home-btn" onclick="protoVorschau()"><span class="ic">'+svgWrapC(I.formular)+'</span> Vorschau im Briefbogen (mit Fotos)</button></div>';
   h+='<div class="center reveal"><button class="btn btn-blue home-btn" onclick="protoFinish()"><span class="ic">'+svgWrapC(I.formular)+'</span> Protokoll abschlie\u00dfen & sichern</button></div>';
   h+='<div class="proto-actions2 reveal"><button class="btn btn-blue btn-sm" onclick="protoMail()">Kopie per Mail an Mieter</button><button class="btn btn-ghost btn-sm" onclick="protoPdf()">Nur PDF herunterladen</button></div>';
   h+='<div class="center reveal" style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="protoNeu()">Neues Protokoll / anderes Objekt</button></div>';
@@ -1191,6 +1203,11 @@ function protoBuildDoc(){
     }
     y+=4;
   });
+  if((p.bemerkung||'').trim()){
+    need(20); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(196,30,30); doc.text('Schlussbemerkung',ML,y); y+=2;
+    const L=doc.splitTextToSize(p.bemerkung,contentW); need(L.length*5+6);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(40,40,40); doc.text(L,ML,y+5); y+=L.length*5+8;
+  }
   need(42); y+=12;
   const half=(contentW-12)/2, sigH=18;
   if(p.sigVermieter){ try{ doc.addImage(p.sigVermieter,'PNG',ML,y-sigH,half*0.85,sigH); }catch(e){} }
@@ -1204,6 +1221,59 @@ function protoBuildDoc(){
   const n=doc.internal.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); tw_drawBriefkopfFooter(doc,i); }
   const fn=(p.mode==='einzug'?'Uebergabeprotokoll':'Abnahmeprotokoll')+'_'+((o.bezeichnung||'Objekt').replace(/[^a-zA-Z0-9]/g,'_'))+'_'+((p.datum||'').replace(/-/g,''))+'.pdf';
   return {doc:doc, fn:fn, titel:titel};
+}
+/* ---- Protokoll-Briefbogen (Bildschirm-Vorschau, spiegelt protoBuildDoc) ---- */
+function protoFotoGridHtml(fotos){
+  if(!fotos||!fotos.length) return '';
+  return '<div class="ps-fotos">'+fotos.map(f=>'<img src="'+f.data+'" alt="Foto">').join('')+'</div>';
+}
+function protoSheetHtml(){
+  if(!proto) return '';
+  const p=proto, o=_o(p.objektId)||{};
+  const titel=p.mode==='einzug'?'Wohnungs\u00fcbergabeprotokoll \u2013 Einzug':'Wohnungsabnahmeprotokoll \u2013 Auszug';
+  let b='';
+  b+='<div class="ps-empf"><div class="ps-empf-l"></div><div class="ps-datum"><span class="ps-datum-l">Datum:</span> <b>'+esc(p.datum?fmtDate(p.datum):'')+'</b></div></div>';
+  b+='<div class="ps-betreff">'+esc(titel)+'</div>';
+  b+='<table class="ps-tab">'
+    +'<tr><td class="k">Objekt</td><td class="v">'+esc(o.bezeichnung||'\u2014')+'</td></tr>'
+    +'<tr><td class="k">Wohnung</td><td class="v">'+esc(p.einheitName||'\u2014')+'</td></tr>'
+    +'<tr><td class="k">Mieter</td><td class="v">'+esc(p.mieter||'\u2014')+'</td></tr>'
+    +'<tr><td class="k">Vorgang</td><td class="v">'+(p.mode==='einzug'?'Einzug / \u00dcbergabe':'Auszug / Abnahme')+'</td></tr>'
+    +'</table>';
+  b+='<h4 class="ps-h">Z\u00e4hlerst\u00e4nde</h4>'
+    +'<table class="ps-grid"><thead><tr><th>Strom</th><th>Gas</th><th>Wasser</th><th>Heizung</th></tr></thead>'
+    +'<tbody><tr><td>'+esc(p.zaehler.strom||'\u2014')+'</td><td>'+esc(p.zaehler.gas||'\u2014')+'</td><td>'+esc(p.zaehler.wasser||'\u2014')+'</td><td>'+esc(p.zaehler.heizung||'\u2014')+'</td></tr></tbody></table>';
+  const kact=protoKeysActive(), knote=(p.keysNote||'').trim();
+  if(kact.length||knote){
+    b+='<h4 class="ps-h">Schl\u00fcssel\u00fcbergabe</h4>';
+    if(kact.length) b+='<table class="ps-grid"><thead><tr><th>Schl\u00fcssel</th><th>Anzahl</th></tr></thead><tbody>'
+      +kact.map(k=>'<tr><td>'+esc(k.name)+'</td><td>'+esc(String(k.anzahl))+'</td></tr>').join('')+'</tbody></table>';
+    if(knote) b+='<p class="ps-text">Weitere: '+esc(knote)+'</p>';
+  }
+  (p.raeume||[]).forEach(r=>{
+    b+='<h4 class="ps-h">'+esc(r.name||'Raum')+'</h4>';
+    b+='<table class="ps-grid"><thead><tr><th>Position</th><th>Zustand / Beschreibung</th></tr></thead><tbody>'
+      +(r.items||[]).map(it=>'<tr><td>'+esc(it.label)+'</td><td>'+esc(it.zustand||'')+'</td></tr>').join('')+'</tbody></table>';
+    if((r.maengel||'').trim()) b+='<p class="ps-maengel">M\u00e4ngel / Besonderheiten: '+esc(r.maengel)+'</p>';
+    b+=protoFotoGridHtml(r.fotos);
+  });
+  if((p.bemerkung||'').trim()){ b+='<h4 class="ps-h">Schlussbemerkung</h4><p class="ps-text">'+esc(p.bemerkung)+'</p>'; }
+  const ortdat=(p.sigOrt?p.sigOrt+', ':'')+(p.datum?fmtDate(p.datum):'');
+  b+='<div class="ps-sign2">'
+    +'<div><div class="ps-sigimg">'+(p.sigVermieter?'<img src="'+p.sigVermieter+'" alt="">':'')+'</div><span class="ps-sigline"></span>Vermieter'+(ortdat?'  \u00b7  '+esc(ortdat):'')+'</div>'
+    +'<div><div class="ps-sigimg">'+(p.sigMieter?'<img src="'+p.sigMieter+'" alt="">':'')+'</div><span class="ps-sigline"></span>Mieter'+(p.mieter?' '+esc(p.mieter):'')+(ortdat?'  \u00b7  '+esc(ortdat):'')+'</div>'
+    +'</div>';
+  if(p.mode==='auszug') b+='<p class="ps-hinweis">Hinweis: Mit R\u00fcckgabe der Wohnung und der Schl\u00fcssel beginnt die sechsmonatige Verj\u00e4hrungsfrist f\u00fcr Ersatzanspr\u00fcche (\u00a7 548 BGB).</p>';
+  return '<div class="pdf-sheet-wrap"><div class="pdf-sheet">'+pdfSheetHeaderHtml()+'<div class="ps-body">'+b+'</div>'+pdfSheetFooterHtml(1,1)+'</div></div>';
+}
+function protoVorschau(){
+  if(!proto) return;
+  document.getElementById('mTitle').textContent='Vorschau \u00b7 '+(proto.mode==='einzug'?'\u00dcbergabeprotokoll':'Abnahmeprotokoll');
+  document.getElementById('mBody').innerHTML='<div class="fbv-lab">So kommt das Protokoll aus dem Drucker \u2013 inkl. Fotos</div>'+protoSheetHtml();
+  document.getElementById('mFoot').innerHTML='<button class="btn btn-red" onclick="closeModal()">Schlie\u00dfen</button><button class="btn btn-blue" onclick="closeModal();protoFinish()">Abschlie\u00dfen &amp; sichern</button>';
+  document.getElementById('overlay').classList.remove('fillwide');
+  document.getElementById('overlay').classList.add('pdfwide');
+  openModal();
 }
 function protoLogAkte(driveId,driveLink){
   const o=_o(proto.objektId); if(!o) return;
